@@ -119,9 +119,12 @@ export class TwitterStrategy<User> extends Strategy<
       );
 
       if (!callbackConfirmed) {
-        throw new Response("Callback not confirmed", {
-          status: 401,
-        });
+        throw json(
+          { message: "Callback not confirmed" },
+          {
+            status: 401,
+          }
+        );
       }
 
       // Then let user authorize the app
@@ -139,10 +142,16 @@ export class TwitterStrategy<User> extends Strategy<
 
     const oauthToken = url.searchParams.get("oauth_token");
     if (!oauthToken)
-      throw json({ message: "Missing oauth token." }, { status: 400 });
+      throw json(
+        { message: "Missing oauth token from auth response." },
+        { status: 400 }
+      );
     const oauthVerifier = url.searchParams.get("oauth_verifier");
     if (!oauthVerifier)
-      throw json({ message: "Missing oauth verifier." }, { status: 400 });
+      throw json(
+        { message: "Missing oauth verifier from auth response." },
+        { status: 400 }
+      );
 
     // Get the access token
     let params = new URLSearchParams();

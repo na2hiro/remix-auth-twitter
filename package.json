@@ -1,13 +1,16 @@
 {
-  "name": "remix-auth-strategy-template",
+  "name": "remix-auth-twitter",
   "version": "0.0.0",
   "main": "./build/index.js",
   "types": "./build/index.d.ts",
+  "author": "na2hiro <a@81.la>",
+  "description": "Twitter OAuth authentication plugin for Remix Auth",
   "scripts": {
     "build": "tsc --project tsconfig.json",
     "typecheck": "tsc --project tsconfig.json --noEmit",
     "lint": "eslint --ext .ts,.tsx src/",
     "test": "jest --config=config/jest.config.ts --passWithNoTests",
+    "test:watch": "npm run test -- --watch",
     "coverage": "npm run test -- --coverage"
   },
   "keywords": [
@@ -15,7 +18,9 @@
     "remix-auth",
     "auth",
     "authentication",
-    "strategy"
+    "strategy",
+    "twitter",
+    "oauth"
   ],
   "license": "MIT",
   "files": [
@@ -34,7 +39,10 @@
     "@remix-run/node": "^1.0.3",
     "@remix-run/react": "^1.1.1",
     "@remix-run/server-runtime": "^1.0.0",
+    "@types/crypto-js": "^4.1.0",
+    "@types/debug": "^4.1.7",
     "@types/jest": "^26.0.23",
+    "@types/uuid": "^8.3.4",
     "@typescript-eslint/eslint-plugin": "^4.23.0",
     "@typescript-eslint/parser": "^4.23.0",
     "babel-jest": "^26.6.3",
@@ -52,6 +60,9 @@
     "typescript": "^4.3.5"
   },
   "dependencies": {
-    "remix-auth": "^3.0.0"
+    "crypto-js": "^4.1.1",
+    "debug": "^4.3.3",
+    "remix-auth": "^3.0.0",
+    "uuid": "^8.3.2"
   }
 }

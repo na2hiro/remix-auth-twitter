@@ -28,6 +28,11 @@
     "package.json",
     "README.md"
   ],
+  "repository": {
+    "type": "git",
+    "url": "git+https://github.com/na2hiro/remix-auth-twitter.git"
+  },
+  "homepage": "https://github.com/na2hiro/remix-auth-twitter#readme",
   "peerDependencies": {
     "@remix-run/server-runtime": "^1.0.0"
   },

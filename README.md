@@ -49,4 +49,4 @@ authenticator.use(
 );
 ```
 
-For the usage of `authenticator`, see [sargiodxa/remix-auth](https://github.com/sergiodxa/remix-auth).
+For the usage of `authenticator`, see [sergiodxa/remix-auth](https://github.com/sergiodxa/remix-auth).

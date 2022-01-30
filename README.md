@@ -22,31 +22,14 @@ npm install remix-auth-twitter remix-auth
 
 ### Prerequisites
 
-* Your app is registered to Twitter and you have consumer key and secret issued https://developer.twitter.com/en/docs/authentication/oauth-1-0a/api-key-and-secret
+* Your app is registered to Twitter and has consumer key and secret issued https://developer.twitter.com/en/docs/authentication/oauth-1-0a/api-key-and-secret
+* Your app has [remix-auth](https://github.com/sergiodxa/remix-auth) set up and `authenticator` is provided:
+  ```typescript
+  // app/services/auth.server.ts
+  export let authenticator = ...;
+  ```
 
-### Set up Remix Auth
-
-Follow the guide of [remix-auth](https://github.com/sergiodxa/remix-auth) for setting up `authenticator`. Let's say we set up like following:
-
-```typescript
-// app/services/session.server.ts
-import { createCookieSessionStorage } from "remix";
-
-// export the whole sessionStorage object
-export let sessionStorage = ...;
-```
-
-```typescript
-// app/services/auth.server.ts
-import { Authenticator } from "remix-auth";
-import { sessionStorage } from "~/services/session.server";
-
-export let authenticator = new Authenticator<User>(sessionStorage);
-```
-
-### Use Remix Auth Twitter
-
-Configure `TwitterStrategy` and pass it to `authenticator.use()`:
+### Tell the Authenticator to use the Twitter strategy
 
 ```typescript jsx
 // app/services/auth.server.ts
@@ -59,7 +42,7 @@ export let authenticator = new Authenticator<User>(sessionStorage);
 const clientID = process.env.TWITTER_CONSUMER_KEY;
 const clientSecret = process.env.TWITTER_CONSUMER_SECRET;
 if (!clientID || !clientSecret) {
-  throw new Error("TWITTER_CONSUMER_KEY nor TWITTER_CONSUMER_SECRET not given");
+  throw new Error("TWITTER_CONSUMER_KEY and TWITTER_CONSUMER_SECRET must be provided");
 }
 
 authenticator.use(
@@ -83,22 +66,31 @@ authenticator.use(
       );
     }
   ),
+  // each strategy has a name and can be changed to use another one
+  // same strategy multiple times, especially useful for the OAuth2 strategy.
   "twitter"
 );
 ```
 
-### Set up login flow
-From now on, this is pretty much `remix-auth` thing and you can rely on the docs there. Keep reading if you want to know the exact steps to get there.
+### Set up login/logout flow
+Follow the [remix-auth docs](https://github.com/sergiodxa/remix-auth#readme) to set up logout flow and `isAuthenticated`.
 
-We need 2 end points: `login`, `login/callback`.
+The log in flow would look like this:
+
+1. User comes to "login" page (e.g. `/login`).
+2. The app will redirect user to Twitter's auth page.
+3. Once user finishes auth, Twitter will redirect user back to your app (e.g. `/login/callback`).
+4. The app will verify the user and let the user login.
+
+To set up the login flow, follow the code below:
 
 ```typescript jsx
 // app/routes/login.tsx
 import {ActionFunction} from "remix";
 import {authenticator} from "~/services/auth.server";
 
+// Normally this will redirect user to twitter auth page
 export let action: ActionFunction = async ({request}) => {
-  // Normally this will redirect user to twitter auth page
   await authenticator.authenticate("twitter", request, {
     successRedirect: "/dashboard", // Destination in case the user is already logged in
   });
@@ -119,36 +111,9 @@ export let loader: LoaderFunction = async ({request}) => {
 };
 ```
 
-Finally, let the user do `POST /login` to trigger log in.
-```typescript jsx
+Then let the user do `POST /login`:
+```jsx
 <Form method="post" action="/login">
   <button>Login</button>
 </Form>
-```
-### Set up logout flow
-```typescript jsx
-// app/routes/logout.tsx
-import {ActionFunction} from "remix";
-import {authenticator} from "~/services/auth.server";
-
-export let action: ActionFunction = async ({request}) => {
-  await authenticator.logout(request, {
-    redirectTo: "/"
-  });
-}
-```
-
-Then, of course, trigger `POST /logout`.
-
-```typescript jsx
-<Form method="post" action="/logout">
-  <button>Logout</button>
-</Form>
-```
-### Retrieve user session
-
-```typescript jsx
-// Returns the user object which is returned by your `verify` function.
-// `null` if not logged in.
-const currentUser = await authenticator.isAuthenticated(request);
 ```

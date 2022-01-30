@@ -1,4 +1,4 @@
-import { createCookieSessionStorage} from "@remix-run/server-runtime";
+import { createCookieSessionStorage } from "@remix-run/server-runtime";
 import fetchMock, { enableFetchMocks } from "jest-fetch-mock";
 
 import { TwitterStrategy } from "../src";
@@ -66,11 +66,11 @@ describe(TwitterStrategy, () => {
     try {
       await strategy.authenticate(request, sessionStorage, {
         sessionKey: "user",
-        successRedirect: "/dashboar",
+        successRedirect: "/dashboard",
       });
     } catch (error) {
       if (!(error instanceof Response)) throw error;
-      expect(error.headers.get("Location")).toBe("/dashboar");
+      expect(error.headers.get("Location")).toBe("/dashboard");
     }
   });
 
@@ -82,13 +82,7 @@ describe(TwitterStrategy, () => {
     fetchMock.mockIf(/oauth\/request_token/, async (req) => {
       return {
         body: "oauth_token=REQUEST_TOKEN&oauth_token_secret=REQUEST_TOKEN_SECRET&oauth_callback_confirmed=false",
-        init: {
-          status: 200,
-          /*statusText: "OK",
-          headers: {
-            "Content-Type": "application/x-www-form-urlencoded",
-          },*/
-        },
+        init: { status: 200 },
       };
     });
 
@@ -133,6 +127,7 @@ describe(TwitterStrategy, () => {
       await strategy.authenticate(request, sessionStorage, {
         sessionKey: "user",
       });
+      fail("Should throw Response");
     } catch (error) {
       if (!(error instanceof Response)) throw error;
 
@@ -147,7 +142,24 @@ describe(TwitterStrategy, () => {
     }
   });
 
-  test("should throw if oauth_token is not on the callback URL params", async () => {
+  test("should fail if `denied` is on the callback URL params (user rejected the app)", async () => {
+    let strategy = new TwitterStrategy<User>(options, verify);
+    let request = new Request("https://example.com/callback?denied=ABC-123");
+    try {
+      await strategy.authenticate(request, sessionStorage, {
+        sessionKey: "user",
+      });
+      fail("Should throw Response");
+    } catch (error) {
+      if (!(error instanceof Response)) throw error;
+      expect(error.status).toEqual(401);
+      expect(await error.json()).toEqual({
+        message: "Please authorize the app",
+      });
+    }
+  });
+
+  test("should throw if `oauth_token` is not on the callback URL params", async () => {
     let strategy = new TwitterStrategy<User>(options, verify);
     let request = new Request(
       "https://example.com/callback?oauth_tokenXXXX=TOKEN&oauth_verifier=VERIFIER"
@@ -156,6 +168,7 @@ describe(TwitterStrategy, () => {
       await strategy.authenticate(request, sessionStorage, {
         sessionKey: "user",
       });
+      fail("Should throw Response");
     } catch (error) {
       if (!(error instanceof Response)) throw error;
       expect(error.status).toEqual(400);
@@ -165,7 +178,94 @@ describe(TwitterStrategy, () => {
     }
   });
 
-  test("should call verify with the access token, refresh token, extra params, user profile and context", async () => {
+  test("should throw if `oauth_verifier` is not on the callback URL params", async () => {
+    let strategy = new TwitterStrategy<User>(options, verify);
+    let request = new Request(
+      "https://example.com/callback?oauth_token=TOKEN&oauth_verifierXXX=VERIFIER"
+    );
+    try {
+      await strategy.authenticate(request, sessionStorage, {
+        sessionKey: "user",
+      });
+      fail("Should throw Response");
+    } catch (error) {
+      if (!(error instanceof Response)) throw error;
+      expect(error.status).toEqual(400);
+      expect(await error.json()).toEqual({
+        message: "Missing oauth verifier from auth response.",
+      });
+    }
+  });
+
+  test("should call verify with the access token, access token secret, and user profile", async () => {
+    fetchMock.mockResponse(async (req) => {
+      const url = new URL(req.url);
+      url.search = "";
+      switch (url.toString()) {
+        case "https://api.twitter.com/oauth/access_token":
+          return {
+            body: "oauth_token=ACCESS_TOKEN&oauth_token_secret=ACCESS_TOKEN_SECRET",
+            init: {
+              status: 200,
+            },
+          };
+        case "https://api.twitter.com/1.1/account/verify_credentials.json":
+          return {
+            body: JSON.stringify({
+              id: 123,
+              screen_name: "na2hiro",
+              other: "info",
+            }),
+            init: {
+              status: 200,
+            },
+          };
+      }
+      fail("unknown fetch: " + req.url);
+    });
+
+    let strategy = new TwitterStrategy<User>(options, verify);
+    let request = new Request(
+      "https://example.com/callback?oauth_token=TOKEN&oauth_verifier=VERIFIER"
+    );
+
+    verify.mockImplementationOnce(
+      ({ accessToken, accessTokenSecret, profile }) => {
+        return {
+          id: profile.id,
+          screen_name: profile.screen_name,
+        };
+      }
+    );
+
+    const user = await strategy.authenticate(request, sessionStorage, {
+      sessionKey: "user",
+    });
+
+    expect(user).toEqual({
+      id: 123,
+      screen_name: "na2hiro",
+    });
+
+    expect(fetchMock.mock.calls[0][0]).toMatchInlineSnapshot(
+      `"https://api.twitter.com/oauth/access_token"`
+    );
+    expect(fetchMock.mock.calls[0][1]!.body!.toString()).toMatchInlineSnapshot(
+      `"oauth_token=TOKEN&oauth_verifier=VERIFIER&oauth_consumer_key=MY_CLIENT_ID"`
+    );
+
+    expect(verify).toHaveBeenLastCalledWith({
+      accessToken: "ACCESS_TOKEN",
+      accessTokenSecret: "ACCESS_TOKEN_SECRET",
+      profile: {
+        id: 123,
+        screen_name: "na2hiro",
+        other: "info",
+      } as unknown as TwitterProfile,
+    } as TwitterStrategyVerifyParams);
+  });
+
+  test("should fail if verify throws Error", async () => {
     fetchMock.mockResponse(async (req) => {
       const url = new URL(req.url);
       url.search = "";
@@ -192,31 +292,22 @@ describe(TwitterStrategy, () => {
     let request = new Request(
       "https://example.com/callback?oauth_token=TOKEN&oauth_verifier=VERIFIER"
     );
+
+    verify.mockImplementationOnce(() => {
+      throw new Error("Nah you're banned, go away.");
+    });
+
     try {
       await strategy.authenticate(request, sessionStorage, {
         sessionKey: "user",
       });
+      fail("Should have thrown");
     } catch (error) {
       if (!(error instanceof Response)) throw error;
-      expect(error.status).toEqual(400);
+      expect(error.status).toEqual(401);
       expect(await error.json()).toEqual({
-        message: "Missing oauth token from auth response.",
+        message: "Nah you're banned, go away.",
       });
     }
-
-    expect(fetchMock.mock.calls[0][0]).toMatchInlineSnapshot(
-      `"https://api.twitter.com/oauth/access_token"`
-    );
-    expect(fetchMock.mock.calls[0][1]!.body!.toString()).toMatchInlineSnapshot(
-      `"oauth_token=TOKEN&oauth_verifier=VERIFIER&oauth_consumer_key=MY_CLIENT_ID"`
-    );
-
-    expect(verify).toHaveBeenLastCalledWith({
-      accessToken: "ACCESS_TOKEN",
-      accessTokenSecret: "ACCESS_TOKEN_SECRET",
-      profile: { id: 123, screen_name: "na2hiro" } as unknown as TwitterProfile,
-    } as TwitterStrategyVerifyParams);
   });
-
-  test.todo("A little bit more test cases would be nice, but I go sleep now");
 });

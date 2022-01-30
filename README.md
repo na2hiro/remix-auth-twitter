@@ -9,7 +9,9 @@ Remix Auth plugin for Twitter OAuth 1.0a.
 | Node.js    | ✅          |
 | Cloudflare | ✅          |
 
-<!-- If it doesn't support one runtime, explain here why -->
+## Demo
+
+Try out [live demo](https://github.com/na2hiro/remix-auth-twitter) ([source code](https://github.com/na2hiro/remix-auth-twitter))
 
 ## Installation
 

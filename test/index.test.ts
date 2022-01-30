@@ -1,4 +1,4 @@
-import { createCookieSessionStorage} from "@remix-run/server-runtime";
+import { createCookieSessionStorage } from "@remix-run/server-runtime";
 import fetchMock, { enableFetchMocks } from "jest-fetch-mock";
 
 import { TwitterStrategy } from "../src";
@@ -147,7 +147,23 @@ describe(TwitterStrategy, () => {
     }
   });
 
-  test("should throw if oauth_token is not on the callback URL params", async () => {
+  test("should fail if `denied` is on the callback URL params (user rejected the app)", async () => {
+    let strategy = new TwitterStrategy<User>(options, verify);
+    let request = new Request("https://example.com/callback?denied=ABC-123");
+    try {
+      await strategy.authenticate(request, sessionStorage, {
+        sessionKey: "user",
+      });
+    } catch (error) {
+      if (!(error instanceof Response)) throw error;
+      expect(error.status).toEqual(401);
+      expect(await error.json()).toEqual({
+        message: "Please authorize the app",
+      });
+    }
+  });
+
+  test("should throw if `oauth_token` is not on the callback URL params", async () => {
     let strategy = new TwitterStrategy<User>(options, verify);
     let request = new Request(
       "https://example.com/callback?oauth_tokenXXXX=TOKEN&oauth_verifier=VERIFIER"
@@ -165,7 +181,7 @@ describe(TwitterStrategy, () => {
     }
   });
 
-  test("should call verify with the access token, refresh token, extra params, user profile and context", async () => {
+  test("should call verify with the access token, access token secret, and user profile", async () => {
     fetchMock.mockResponse(async (req) => {
       const url = new URL(req.url);
       url.search = "";

@@ -140,6 +140,15 @@ export class TwitterStrategy<User> extends Strategy<
 
     // Validations of the callback URL params
 
+    const denied = url.searchParams.get("denied");
+    if (denied) {
+      return await this.failure(
+        "Please authorize the app",
+        request,
+        sessionStorage,
+        options
+      );
+    }
     const oauthToken = url.searchParams.get("oauth_token");
     if (!oauthToken)
       throw json(

@@ -11,7 +11,7 @@ Remix Auth plugin for Twitter OAuth 1.0a.
 
 ## Demo
 
-Try out [live demo](https://github.com/na2hiro/remix-auth-twitter) ([source code](https://github.com/na2hiro/remix-auth-twitter))
+Try out [live demo](https://remix-auth-twitter-example.na2hiro.workers.dev/) ([source code](https://github.com/na2hiro/remix-auth-twitter-example))
 
 ## Installation
 

@@ -30,7 +30,7 @@ export interface TwitterStrategyOptions {
   clientID: string;
   clientSecret: string;
   callbackURL: string;
-  includeEmail: boolean;
+  includeEmail?: boolean;
 }
 
 export interface TwitterStrategyVerifyParams {
@@ -56,7 +56,7 @@ export interface TwitterStrategyVerifyParams {
  * - `clientID`          identifies client to service provider
  * - `clientSecret`      secret used to establish ownership of the client identifier
  * - `callbackURL`       URL to which the service provider will redirect the user after obtaining authorization
- * - `includeEmail`      Whether or not to return the user email
+ * - `includeEmail`      Whether or not to return the user email (optional. default: false)
  *
  * @example
  * authenticator.use(new TwitterStrategy(
@@ -90,7 +90,7 @@ export class TwitterStrategy<User> extends Strategy<
     this.clientID = options.clientID;
     this.clientSecret = options.clientSecret;
     this.callbackURL = options.callbackURL;
-    this.includeEmail = options.includeEmail;
+    this.includeEmail = options.includeEmail || false;
   }
 
   async authenticate(

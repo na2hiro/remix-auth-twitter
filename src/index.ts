@@ -367,7 +367,7 @@ export class TwitterStrategy<User> extends Strategy<
     const params = this.signRequest(
       {
         oauth_token: accessToken,
-        include_email: includeEmail === true ? "true" : "false",
+        include_email: includeEmail ? "true" : "false",
       },
       "GET",
       verifyCredentialsURL,

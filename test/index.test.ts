@@ -19,6 +19,7 @@ describe(TwitterStrategy, () => {
     clientID: "MY_CLIENT_ID",
     clientSecret: "MY_CLIENT_SECRET",
     callbackURL: "https://example.com/callback",
+    includeEmail: true,
   });
 
   interface User {

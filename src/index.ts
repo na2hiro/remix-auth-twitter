@@ -30,6 +30,7 @@ export interface TwitterStrategyOptions {
   clientID: string;
   clientSecret: string;
   callbackURL: string;
+  includeEmail?: boolean;
 }
 
 export interface TwitterStrategyVerifyParams {
@@ -55,16 +56,18 @@ export interface TwitterStrategyVerifyParams {
  * - `clientID`          identifies client to service provider
  * - `clientSecret`      secret used to establish ownership of the client identifier
  * - `callbackURL`       URL to which the service provider will redirect the user after obtaining authorization
+ * - `includeEmail`      Whether or not to return the user email (optional. default: false)
  *
  * @example
  * authenticator.use(new TwitterStrategy(
  *   {
  *     clientID: '123-456-789',
- *     clientSecret: 'shhh-its-a-secret'
- *     callbackURL: 'https://www.example.net/auth/example/callback'
+ *     clientSecret: 'shhh-its-a-secret',
+ *     callbackURL: 'https://www.example.net/auth/example/callback',
+ *     includeEmail: true
  *   },
  *   async ({ accessToken, accessTokenSecret, profile }) => {
- *     return await User.findOrCreate(profile.id, ...);
+ *     return await User.findOrCreate(profile.id, profile.email, ...);
  *   }
  * ));
  */
@@ -77,6 +80,7 @@ export class TwitterStrategy<User> extends Strategy<
   protected clientID: string;
   protected clientSecret: string;
   protected callbackURL: string;
+  protected includeEmail: boolean;
 
   constructor(
     options: TwitterStrategyOptions,
@@ -86,6 +90,7 @@ export class TwitterStrategy<User> extends Strategy<
     this.clientID = options.clientID;
     this.clientSecret = options.clientSecret;
     this.callbackURL = options.callbackURL;
+    this.includeEmail = options.includeEmail || false;
   }
 
   async authenticate(
@@ -172,7 +177,11 @@ export class TwitterStrategy<User> extends Strategy<
     );
 
     // Get the profile
-    let profile = await this.userProfile(accessToken, accessTokenSecret);
+    let profile = await this.userProfile(
+      accessToken,
+      accessTokenSecret,
+      this.includeEmail
+    );
 
     // Verify the user and return it, or redirect
     try {
@@ -352,11 +361,13 @@ export class TwitterStrategy<User> extends Strategy<
    */
   protected async userProfile(
     accessToken: string,
-    accessTokenSecret: string
+    accessTokenSecret: string,
+    includeEmail: boolean
   ): Promise<TwitterProfile> {
     const params = this.signRequest(
       {
         oauth_token: accessToken,
+        include_email: includeEmail ? "true" : "false",
       },
       "GET",
       verifyCredentialsURL,

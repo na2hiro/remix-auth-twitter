@@ -53,6 +53,7 @@ authenticator.use(
       clientID,
       clientSecret,
       callbackURL: "https://my-app/login/callback",
+      includeEmail: true // Optional parameter. Default: false.
     },
     // Define what to do when the user is authenticated
     async ({ accessToken, accessTokenSecret, profile }) => {
@@ -73,6 +74,8 @@ authenticator.use(
   "twitter"
 );
 ```
+
+The `includeEmail` parameter above is optional, and defaults to false. If you decide you want the user's email address, you need to grant more permissions to your app on [developer.twitter.com](https://developer.twitter.com/en/docs/twitter-api/v1/accounts-and-users/manage-account-settings/api-reference/get-account-verify_credentials).
 
 ### Set up login/logout flow
 Follow the [remix-auth docs](https://github.com/sergiodxa/remix-auth#readme) to set up logout flow and `isAuthenticated`.

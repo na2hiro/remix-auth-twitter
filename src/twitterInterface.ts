@@ -86,4 +86,5 @@ export type TwitterProfile = {
   withheld_in_countries: [];
   suspended: boolean;
   needs_phone_verification: boolean;
+  email?: string;
 };

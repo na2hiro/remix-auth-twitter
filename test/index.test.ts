@@ -1,4 +1,4 @@
-import { createCookieSessionStorage } from "@remix-run/server-runtime";
+import { createCookieSessionStorage } from "@remix-run/node";
 import fetchMock, { enableFetchMocks } from "jest-fetch-mock";
 
 import { TwitterStrategy } from "../src";

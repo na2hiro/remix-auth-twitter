@@ -1,4 +1,4 @@
-# Remix Auth Twitter
+# Remix Auth Twitter ![example branch parameter](https://github.com/na2hiro/remix-auth-twitter/actions/workflows/main.yml/badge.svg?branch=main)
 
 Remix Auth plugin for Twitter OAuth 1.0a.
 

@@ -40,6 +40,8 @@ export interface TwitterStrategyVerifyParams {
   context?: AppLoadContext;
 }
 
+export const TwitterStrategyDefaultName = 'twitter';
+
 /**
  * Twitter's OAuth 1.0a login
  *
@@ -75,7 +77,7 @@ export class TwitterStrategy<User> extends Strategy<
   User,
   TwitterStrategyVerifyParams
 > {
-  name = "twitter";
+  name = TwitterStrategyDefaultName;
 
   protected clientID: string;
   protected clientSecret: string;

@@ -40,7 +40,7 @@ export interface TwitterStrategyVerifyParams {
   context?: AppLoadContext;
 }
 
-export const TwitterStrategyDefaultName = 'twitter';
+export const TwitterStrategyDefaultName = "twitter";
 
 /**
  * Twitter's OAuth 1.0a login

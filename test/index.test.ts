@@ -1,7 +1,7 @@
 import { createCookieSessionStorage } from "@remix-run/node";
 import fetchMock, { enableFetchMocks } from "jest-fetch-mock";
 
-import { TwitterStrategy } from "../src";
+import { TwitterStrategy, TwitterStrategyOptions } from "../src";
 import { TwitterProfile, TwitterStrategyVerifyParams } from "../build";
 
 enableFetchMocks();
@@ -14,8 +14,6 @@ describe(TwitterStrategy, () => {
   Date.now = jest.fn(() => 1_234_567_890_123);
 
   let options = Object.freeze({
-    authorizationURL: "https://example.app/authorize",
-    tokenURL: "https://example.app/token",
     clientID: "MY_CLIENT_ID",
     clientSecret: "MY_CLIENT_SECRET",
     callbackURL: "https://example.com/callback",
@@ -138,7 +136,7 @@ describe(TwitterStrategy, () => {
 
       let redirect = error.headers.get("Location");
       expect(redirect).toMatchInlineSnapshot(
-        `"https://api.twitter.com/oauth/authorize?oauth_token=REQUEST_TOKEN"`
+        `"https://api.twitter.com/oauth/authenticate?oauth_token=REQUEST_TOKEN"`
       );
     }
   });

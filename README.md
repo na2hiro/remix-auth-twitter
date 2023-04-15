@@ -55,7 +55,8 @@ authenticator.use(
       callbackURL: "https://my-app/login/callback",
       // In order to get user's email address, you need to configure your app permission.
       // See https://developer.twitter.com/en/docs/twitter-api/v1/accounts-and-users/manage-account-settings/api-reference/get-account-verify_credentials.
-      includeEmail: true // Optional parameter. Default: false.
+      includeEmail: true, // Optional parameter. Default: false.
+      alwaysReauthorize: false // otherwise, ask for permission every time
     },
     // Define what to do when the user is authenticated
     async ({ accessToken, accessTokenSecret, profile }) => {

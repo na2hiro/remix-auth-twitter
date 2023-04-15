@@ -22,6 +22,7 @@ let debug = createDebug("TwitterStrategy");
 
 const requestTokenURL = "https://api.twitter.com/oauth/request_token";
 const authorizationURL = "https://api.twitter.com/oauth/authorize";
+const authenticationURL = "https://api.twitter.com/oauth/authenticate";
 const tokenURL = "https://api.twitter.com/oauth/access_token";
 const verifyCredentialsURL =
   "https://api.twitter.com/1.1/account/verify_credentials.json";
@@ -31,6 +32,7 @@ export interface TwitterStrategyOptions {
   clientSecret: string;
   callbackURL: string;
   includeEmail?: boolean;
+  alwaysReauthorize?: boolean;
 }
 
 export interface TwitterStrategyVerifyParams {
@@ -55,10 +57,12 @@ export const TwitterStrategyDefaultName = "twitter";
  * An AuthorizationError should be raised to indicate an authentication failure.
  *
  * Options:
- * - `clientID`          identifies client to service provider
- * - `clientSecret`      secret used to establish ownership of the client identifier
- * - `callbackURL`       URL to which the service provider will redirect the user after obtaining authorization
- * - `includeEmail`      Whether or not to return the user email (optional. default: false)
+ * - `clientID`           identifies client to service provider
+ * - `clientSecret`       secret used to establish ownership of the client identifier
+ * - `callbackURL`        URL to which the service provider will redirect the user after obtaining authorization
+ * - `includeEmail`       Whether to return the user email (optional. default: false)
+ * - `alwaysReauthorize`  If set to true, always as app permissions. This was v1 behavior.
+ *                        If false, just let them login if they've once accepted the permission. (optional. default: false)
  *
  * @example
  * authenticator.use(new TwitterStrategy(
@@ -83,6 +87,7 @@ export class TwitterStrategy<User> extends Strategy<
   protected clientSecret: string;
   protected callbackURL: string;
   protected includeEmail: boolean;
+  protected alwaysReauthorize: boolean;
 
   constructor(
     options: TwitterStrategyOptions,
@@ -93,6 +98,7 @@ export class TwitterStrategy<User> extends Strategy<
     this.clientSecret = options.clientSecret;
     this.callbackURL = options.callbackURL;
     this.includeEmail = options.includeEmail || false;
+    this.alwaysReauthorize = options.alwaysReauthorize || false;
   }
 
   async authenticate(
@@ -135,14 +141,11 @@ export class TwitterStrategy<User> extends Strategy<
       }
 
       // Then let user authorize the app
-      throw redirect(
-        TwitterStrategy.getAuthorizationURL(requestToken).toString(),
-        {
-          headers: {
-            "Set-Cookie": await sessionStorage.commitSession(session),
-          },
-        }
-      );
+      throw redirect(this.getAuthURL(requestToken).toString(), {
+        headers: {
+          "Set-Cookie": await sessionStorage.commitSession(session),
+        },
+      });
     }
 
     // Validations of the callback URL params
@@ -301,11 +304,13 @@ export class TwitterStrategy<User> extends Strategy<
   /**
    * Step 2: Let user authorize
    */
-  private static getAuthorizationURL(requestToken: string) {
+  private getAuthURL(requestToken: string) {
     let params = new URLSearchParams();
     params.set("oauth_token", requestToken);
 
-    let url = new URL(authorizationURL);
+    let url = new URL(
+      this.alwaysReauthorize ? authorizationURL : authenticationURL
+    );
     url.search = params.toString();
 
     return url;

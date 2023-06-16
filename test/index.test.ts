@@ -1,8 +1,7 @@
 import { createCookieSessionStorage } from "@remix-run/node";
 import fetchMock, { enableFetchMocks } from "jest-fetch-mock";
 
-import { TwitterStrategy, TwitterStrategyOptions } from "../src";
-import { TwitterProfile, TwitterStrategyVerifyParams } from "../build";
+import { Profile, TwitterStrategy, TwitterStrategyVerifyParams } from "../src";
 
 enableFetchMocks();
 
@@ -196,25 +195,14 @@ describe(TwitterStrategy, () => {
     }
   });
 
-  test("should call verify with the access token, access token secret, and user profile", async () => {
+  test("should return access token, access token secret, and a minimum user profile", async () => {
     fetchMock.mockResponse(async (req) => {
       const url = new URL(req.url);
       url.search = "";
       switch (url.toString()) {
         case "https://api.twitter.com/oauth/access_token":
           return {
-            body: "oauth_token=ACCESS_TOKEN&oauth_token_secret=ACCESS_TOKEN_SECRET",
-            init: {
-              status: 200,
-            },
-          };
-        case "https://api.twitter.com/1.1/account/verify_credentials.json":
-          return {
-            body: JSON.stringify({
-              id: 123,
-              screen_name: "na2hiro",
-              other: "info",
-            }),
+            body: "oauth_token=ACCESS_TOKEN&oauth_token_secret=ACCESS_TOKEN_SECRET&screen_name=na2hiro&user_id=123",
             init: {
               status: 200,
             },
@@ -231,8 +219,8 @@ describe(TwitterStrategy, () => {
     verify.mockImplementationOnce(
       ({ accessToken, accessTokenSecret, profile }) => {
         return {
-          id: profile.id,
-          screen_name: profile.screen_name,
+          userId: profile.userId,
+          screenName: profile.screenName,
         };
       }
     );
@@ -242,8 +230,8 @@ describe(TwitterStrategy, () => {
     });
 
     expect(user).toEqual({
-      id: 123,
-      screen_name: "na2hiro",
+      userId: "123",
+      screenName: "na2hiro",
     });
 
     expect(fetchMock.mock.calls[0][0]).toMatchInlineSnapshot(
@@ -257,10 +245,9 @@ describe(TwitterStrategy, () => {
       accessToken: "ACCESS_TOKEN",
       accessTokenSecret: "ACCESS_TOKEN_SECRET",
       profile: {
-        id: 123,
-        screen_name: "na2hiro",
-        other: "info",
-      } as unknown as TwitterProfile,
+        userId: "123",
+        screenName: "na2hiro",
+      } as Profile,
     } as TwitterStrategyVerifyParams);
   });
 

@@ -11,7 +11,7 @@ Remix Auth plugin for Twitter OAuth 1.0a.
 
 ## Demo
 
-Try out [live demo](https://remix-auth-twitter-example.na2hiro.workers.dev/) ([source code](https://github.com/na2hiro/remix-auth-twitter-example))
+Try out ~~[live demo](https://remix-auth-twitter-example.na2hiro.workers.dev/)~~ Currently it doesn't work due to updates on Twitter APIs. You could try cloning the [source code](https://github.com/na2hiro/remix-auth-twitter-example)
 
 ## Installation
 
@@ -53,15 +53,11 @@ authenticator.use(
       clientID,
       clientSecret,
       callbackURL: "https://my-app/login/callback",
-      // In order to get user's email address, you need to configure your app permission.
-      // See https://developer.twitter.com/en/docs/twitter-api/v1/accounts-and-users/manage-account-settings/api-reference/get-account-verify_credentials.
-      includeEmail: true, // Optional parameter. Default: false.
       alwaysReauthorize: false // otherwise, ask for permission every time
     },
     // Define what to do when the user is authenticated
     async ({ accessToken, accessTokenSecret, profile }) => {
-      // profile contains all the info from `account/verify_credentials`
-      // https://developer.twitter.com/en/docs/twitter-api/v1/accounts-and-users/manage-account-settings/api-reference/get-account-verify_credentials
+      // profile contains userId and screenName
 
       // Return a user object to store in sessionStorage.
       // You can also throw Error to reject the login

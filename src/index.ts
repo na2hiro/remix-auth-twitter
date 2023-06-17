@@ -14,9 +14,6 @@ import { v4 as uuid } from "uuid";
 import hmacSHA1 from "crypto-js/hmac-sha1";
 import Base64 from "crypto-js/enc-base64";
 import { fixedEncodeURIComponent } from "./utils";
-import type { TwitterProfile } from "./twitterInterface";
-
-export type { TwitterProfile } from "./twitterInterface";
 
 let debug = createDebug("TwitterStrategy");
 
@@ -24,21 +21,23 @@ const requestTokenURL = "https://api.twitter.com/oauth/request_token";
 const authorizationURL = "https://api.twitter.com/oauth/authorize";
 const authenticationURL = "https://api.twitter.com/oauth/authenticate";
 const tokenURL = "https://api.twitter.com/oauth/access_token";
-const verifyCredentialsURL =
-  "https://api.twitter.com/1.1/account/verify_credentials.json";
 
 export interface TwitterStrategyOptions {
   clientID: string;
   clientSecret: string;
   callbackURL: string;
-  includeEmail?: boolean;
   alwaysReauthorize?: boolean;
+}
+
+export interface Profile {
+  userId: string;
+  screenName: string;
 }
 
 export interface TwitterStrategyVerifyParams {
   accessToken: string;
   accessTokenSecret: string;
-  profile: TwitterProfile;
+  profile: Profile;
   context?: AppLoadContext;
 }
 
@@ -60,7 +59,6 @@ export const TwitterStrategyDefaultName = "twitter";
  * - `clientID`           identifies client to service provider
  * - `clientSecret`       secret used to establish ownership of the client identifier
  * - `callbackURL`        URL to which the service provider will redirect the user after obtaining authorization
- * - `includeEmail`       Whether to return the user email (optional. default: false)
  * - `alwaysReauthorize`  If set to true, always as app permissions. This was v1 behavior.
  *                        If false, just let them login if they've once accepted the permission. (optional. default: false)
  *
@@ -70,7 +68,6 @@ export const TwitterStrategyDefaultName = "twitter";
  *     clientID: '123-456-789',
  *     clientSecret: 'shhh-its-a-secret',
  *     callbackURL: 'https://www.example.net/auth/example/callback',
- *     includeEmail: true
  *   },
  *   async ({ accessToken, accessTokenSecret, profile }) => {
  *     return await User.findOrCreate(profile.id, profile.email, ...);
@@ -86,7 +83,6 @@ export class TwitterStrategy<User> extends Strategy<
   protected clientID: string;
   protected clientSecret: string;
   protected callbackURL: string;
-  protected includeEmail: boolean;
   protected alwaysReauthorize: boolean;
 
   constructor(
@@ -97,7 +93,6 @@ export class TwitterStrategy<User> extends Strategy<
     this.clientID = options.clientID;
     this.clientSecret = options.clientSecret;
     this.callbackURL = options.callbackURL;
-    this.includeEmail = options.includeEmail || false;
     this.alwaysReauthorize = options.alwaysReauthorize || false;
   }
 
@@ -106,7 +101,7 @@ export class TwitterStrategy<User> extends Strategy<
     sessionStorage: SessionStorage,
     options: AuthenticateOptions
   ): Promise<User> {
-    debug("Request URL", request.url);
+    debug("Request URL", request.url.toString());
     let url = new URL(request.url);
     let session = await sessionStorage.getSession(
       request.headers.get("Cookie")
@@ -121,11 +116,10 @@ export class TwitterStrategy<User> extends Strategy<
     }
 
     let callbackURL = this.getCallbackURL(url);
-    debug("Callback URL", callbackURL);
+    debug("Callback URL", callbackURL.toString());
 
     // Before user navigates to login page: Redirect to login page
     if (url.pathname !== callbackURL.pathname) {
-      debug("Requesting request token");
       // Unlike OAuth2, we first hit the request token endpoint
       const { requestToken, callbackConfirmed } = await this.fetchRequestToken(
         callbackURL
@@ -152,6 +146,7 @@ export class TwitterStrategy<User> extends Strategy<
 
     const denied = url.searchParams.get("denied");
     if (denied) {
+      debug("Denied");
       return await this.failure(
         "Please authorize the app",
         request,
@@ -177,16 +172,8 @@ export class TwitterStrategy<User> extends Strategy<
     params.set("oauth_token", oauthToken);
     params.set("oauth_verifier", oauthVerifier);
 
-    let { accessToken, accessTokenSecret } = await this.fetchAccessToken(
-      params
-    );
-
-    // Get the profile
-    let profile = await this.userProfile(
-      accessToken,
-      accessTokenSecret,
-      this.includeEmail
-    );
+    let { accessToken, accessTokenSecret, ...profile } =
+      await this.fetchAccessTokenAndProfile(params);
 
     // Verify the user and return it, or redirect
     try {
@@ -242,7 +229,9 @@ export class TwitterStrategy<User> extends Strategy<
     );
     const url = new URL(requestTokenURL);
     url.search = new URLSearchParams(parameters).toString();
-    let response = await fetch(url.toString(), {
+    const urlString = url.toString();
+    debug("Fetching request token", urlString);
+    let response = await fetch(urlString, {
       method: "GET",
     });
 
@@ -319,12 +308,15 @@ export class TwitterStrategy<User> extends Strategy<
   /**
    * Step 3: Fetch access token to do anything
    */
-  private async fetchAccessToken(params: URLSearchParams): Promise<{
+  private async fetchAccessTokenAndProfile(params: URLSearchParams): Promise<{
     accessToken: string;
     accessTokenSecret: string;
+    userId: string;
+    screenName: string;
   }> {
     params.set("oauth_consumer_key", this.clientID);
 
+    debug("Fetch access token", tokenURL, params.toString());
     let response = await fetch(tokenURL, {
       method: "POST",
       headers: { "Content-Type": "application/x-www-form-urlencoded" },
@@ -337,12 +329,16 @@ export class TwitterStrategy<User> extends Strategy<
       throw new Response(body, { status: 401 });
     }
 
-    return await this.getAccessToken(response.clone() as unknown as Response);
+    return await this.extractAccessTokenAndProfile(
+      response.clone() as unknown as Response
+    );
   }
 
-  protected async getAccessToken(response: Response): Promise<{
+  protected async extractAccessTokenAndProfile(response: Response): Promise<{
     accessToken: string;
     accessTokenSecret: string;
+    userId: string;
+    screenName: string;
   }> {
     const text = await response.text();
     const obj: { [key: string]: string } = {};
@@ -350,39 +346,11 @@ export class TwitterStrategy<User> extends Strategy<
       const [key, value] = pair.split("=");
       obj[key] = value;
     }
-    const accessToken = obj.oauth_token as string;
-    const accessTokenSecret = obj.oauth_token_secret as string;
     return {
-      accessToken,
-      accessTokenSecret,
+      accessToken: obj.oauth_token as string,
+      accessTokenSecret: obj.oauth_token_secret as string,
+      userId: obj.user_id as string,
+      screenName: obj.screen_name as string,
     } as const;
-  }
-
-  /**
-   * Retrieve user profile from service provider.
-   *
-   * OAuth 2.0-based authentication strategies can override this function in
-   * order to load the user's profile from the service provider.  This assists
-   * applications (and users of those applications) in the initial registration
-   * process by automatically submitting required information.
-   */
-  protected async userProfile(
-    accessToken: string,
-    accessTokenSecret: string,
-    includeEmail: boolean
-  ): Promise<TwitterProfile> {
-    const params = this.signRequest(
-      {
-        oauth_token: accessToken,
-        include_email: includeEmail ? "true" : "false",
-      },
-      "GET",
-      verifyCredentialsURL,
-      accessTokenSecret
-    );
-    const url = new URL(verifyCredentialsURL);
-    url.search = new URLSearchParams(params).toString();
-    const response = await fetch(url.toString());
-    return await response.json();
   }
 }

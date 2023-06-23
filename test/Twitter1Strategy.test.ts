@@ -1,11 +1,22 @@
 import { createCookieSessionStorage } from "@remix-run/node";
 import fetchMock, { enableFetchMocks } from "jest-fetch-mock";
 
-import { Profile, TwitterStrategy, TwitterStrategyVerifyParams } from "../src";
+import {
+  Profile,
+  Twitter1Strategy,
+  Twitter1StrategyVerifyParams,
+} from "../src";
+
+const OPTIONS = {
+  sessionKey: "user",
+  sessionErrorKey: "error",
+  sessionStrategyKey: "strategy",
+  name: "twitter1",
+};
 
 enableFetchMocks();
 
-describe(TwitterStrategy, () => {
+describe(Twitter1Strategy, () => {
   let verify = jest.fn();
   let sessionStorage = createCookieSessionStorage({
     cookie: { secrets: ["s3cr3t"] },
@@ -24,18 +35,18 @@ describe(TwitterStrategy, () => {
   }
 
   beforeEach(() => {
-    (TwitterStrategy as any).generateNonce = () => "abcdefg";
+    (Twitter1Strategy as any).generateNonce = () => "abcdefg";
     jest.resetAllMocks();
     fetchMock.resetMocks();
   });
 
   test("should have the name `twitter`", () => {
-    let strategy = new TwitterStrategy<User>(options, verify);
-    expect(strategy.name).toBe("twitter");
+    let strategy = new Twitter1Strategy<User>(options, verify);
+    expect(strategy.name).toBe("twitter1");
   });
 
   test("if user is already in the session redirect to `/`", async () => {
-    let strategy = new TwitterStrategy<User>(options, verify);
+    let strategy = new Twitter1Strategy<User>(options, verify);
 
     let session = await sessionStorage.getSession();
     session.set("user", { id: 123 });
@@ -44,15 +55,13 @@ describe(TwitterStrategy, () => {
       headers: { cookie: await sessionStorage.commitSession(session) },
     });
 
-    let user = await strategy.authenticate(request, sessionStorage, {
-      sessionKey: "user",
-    });
+    let user = await strategy.authenticate(request, sessionStorage, OPTIONS);
 
     expect(user).toEqual({ id: 123 });
   });
 
   test("if user is already in the session and successRedirect is set throw a redirect", async () => {
-    let strategy = new TwitterStrategy<User>(options, verify);
+    let strategy = new Twitter1Strategy<User>(options, verify);
 
     let session = await sessionStorage.getSession();
     session.set("user", { id: 123 } as User);
@@ -63,7 +72,7 @@ describe(TwitterStrategy, () => {
 
     try {
       await strategy.authenticate(request, sessionStorage, {
-        sessionKey: "user",
+        ...OPTIONS,
         successRedirect: "/dashboard",
       });
     } catch (error) {
@@ -73,7 +82,7 @@ describe(TwitterStrategy, () => {
   });
 
   test("should throw if callback is not confirmed", async () => {
-    let strategy = new TwitterStrategy<User>(options, verify);
+    let strategy = new Twitter1Strategy<User>(options, verify);
 
     let request = new Request("https://example.com/login");
 
@@ -85,9 +94,7 @@ describe(TwitterStrategy, () => {
     });
 
     try {
-      await strategy.authenticate(request, sessionStorage, {
-        sessionKey: "user",
-      });
+      await strategy.authenticate(request, sessionStorage, OPTIONS);
       fail("should throw Response");
     } catch (error) {
       if (!(error instanceof Response)) throw error;
@@ -102,7 +109,7 @@ describe(TwitterStrategy, () => {
   });
 
   test("should redirect to authorization if request is not the callback", async () => {
-    let strategy = new TwitterStrategy<User>(options, verify);
+    let strategy = new Twitter1Strategy<User>(options, verify);
 
     let request = new Request("https://example.com/login");
 
@@ -122,9 +129,7 @@ describe(TwitterStrategy, () => {
     });
 
     try {
-      await strategy.authenticate(request, sessionStorage, {
-        sessionKey: "user",
-      });
+      await strategy.authenticate(request, sessionStorage, OPTIONS);
       fail("Should throw Response");
     } catch (error) {
       if (!(error instanceof Response)) throw error;
@@ -141,12 +146,10 @@ describe(TwitterStrategy, () => {
   });
 
   test("should fail if `denied` is on the callback URL params (user rejected the app)", async () => {
-    let strategy = new TwitterStrategy<User>(options, verify);
+    let strategy = new Twitter1Strategy<User>(options, verify);
     let request = new Request("https://example.com/callback?denied=ABC-123");
     try {
-      await strategy.authenticate(request, sessionStorage, {
-        sessionKey: "user",
-      });
+      await strategy.authenticate(request, sessionStorage, OPTIONS);
       fail("Should throw Response");
     } catch (error) {
       if (!(error instanceof Response)) throw error;
@@ -158,14 +161,12 @@ describe(TwitterStrategy, () => {
   });
 
   test("should throw if `oauth_token` is not on the callback URL params", async () => {
-    let strategy = new TwitterStrategy<User>(options, verify);
+    let strategy = new Twitter1Strategy<User>(options, verify);
     let request = new Request(
       "https://example.com/callback?oauth_tokenXXXX=TOKEN&oauth_verifier=VERIFIER"
     );
     try {
-      await strategy.authenticate(request, sessionStorage, {
-        sessionKey: "user",
-      });
+      await strategy.authenticate(request, sessionStorage, OPTIONS);
       fail("Should throw Response");
     } catch (error) {
       if (!(error instanceof Response)) throw error;
@@ -177,14 +178,12 @@ describe(TwitterStrategy, () => {
   });
 
   test("should throw if `oauth_verifier` is not on the callback URL params", async () => {
-    let strategy = new TwitterStrategy<User>(options, verify);
+    let strategy = new Twitter1Strategy<User>(options, verify);
     let request = new Request(
       "https://example.com/callback?oauth_token=TOKEN&oauth_verifierXXX=VERIFIER"
     );
     try {
-      await strategy.authenticate(request, sessionStorage, {
-        sessionKey: "user",
-      });
+      await strategy.authenticate(request, sessionStorage, OPTIONS);
       fail("Should throw Response");
     } catch (error) {
       if (!(error instanceof Response)) throw error;
@@ -211,7 +210,7 @@ describe(TwitterStrategy, () => {
       fail("unknown fetch: " + req.url);
     });
 
-    let strategy = new TwitterStrategy<User>(options, verify);
+    let strategy = new Twitter1Strategy<User>(options, verify);
     let request = new Request(
       "https://example.com/callback?oauth_token=TOKEN&oauth_verifier=VERIFIER"
     );
@@ -225,9 +224,7 @@ describe(TwitterStrategy, () => {
       }
     );
 
-    const user = await strategy.authenticate(request, sessionStorage, {
-      sessionKey: "user",
-    });
+    const user = await strategy.authenticate(request, sessionStorage, OPTIONS);
 
     expect(user).toEqual({
       userId: "123",
@@ -248,7 +245,7 @@ describe(TwitterStrategy, () => {
         userId: "123",
         screenName: "na2hiro",
       } as Profile,
-    } as TwitterStrategyVerifyParams);
+    } as Twitter1StrategyVerifyParams);
   });
 
   test("should fail if verify throws Error", async () => {
@@ -263,18 +260,11 @@ describe(TwitterStrategy, () => {
               status: 200,
             },
           };
-        case "https://api.twitter.com/1.1/account/verify_credentials.json":
-          return {
-            body: JSON.stringify({ id: 123, screen_name: "na2hiro" }),
-            init: {
-              status: 200,
-            },
-          };
       }
       fail("unknown fetch: " + req.url);
     });
 
-    let strategy = new TwitterStrategy<User>(options, verify);
+    let strategy = new Twitter1Strategy<User>(options, verify);
     let request = new Request(
       "https://example.com/callback?oauth_token=TOKEN&oauth_verifier=VERIFIER"
     );
@@ -284,9 +274,7 @@ describe(TwitterStrategy, () => {
     });
 
     try {
-      await strategy.authenticate(request, sessionStorage, {
-        sessionKey: "user",
-      });
+      await strategy.authenticate(request, sessionStorage, OPTIONS);
       fail("Should have thrown");
     } catch (error) {
       if (!(error instanceof Response)) throw error;

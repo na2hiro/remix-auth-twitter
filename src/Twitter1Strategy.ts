@@ -23,8 +23,8 @@ const authenticationURL = "https://api.twitter.com/oauth/authenticate";
 const tokenURL = "https://api.twitter.com/oauth/access_token";
 
 export interface Twitter1StrategyOptions {
-  clientID: string;
-  clientSecret: string;
+  consumerKey: string;
+  consumerSecret: string;
   callbackURL: string;
   alwaysReauthorize?: boolean;
 }
@@ -44,7 +44,7 @@ export interface Twitter1StrategyVerifyParams {
 export const Twitter1StrategyDefaultName = "twitter1";
 
 /**
- * Twitter's OAuth 1.0a login
+ * Twitter's OAuth 1.0a login (https://developer.twitter.com/en/docs/authentication/oauth-1-0a/obtaining-user-access-tokens)
  *
  * Applications must supply a `verify` callback, for which the function signature is:
  *
@@ -56,8 +56,8 @@ export const Twitter1StrategyDefaultName = "twitter1";
  * An AuthorizationError should be raised to indicate an authentication failure.
  *
  * Options:
- * - `clientID`           identifies client to service provider
- * - `clientSecret`       secret used to establish ownership of the client identifier
+ * - `consumerKey`        "API Key" under "Consumer Keys", which identifies client to service provider
+ * - `clientSecret`       "API Secret" under "Consumer Keys", which is a secret used to establish ownership of the client identifier
  * - `callbackURL`        URL to which the service provider will redirect the user after obtaining authorization
  * - `alwaysReauthorize`  If set to true, always as app permissions. This was v1 behavior.
  *                        If false, just let them login if they've once accepted the permission. (optional. default: false)
@@ -65,8 +65,8 @@ export const Twitter1StrategyDefaultName = "twitter1";
  * @example
  * authenticator.use(new TwitterStrategy(
  *   {
- *     clientID: '123-456-789',
- *     clientSecret: 'shhh-its-a-secret',
+ *     consumerKey: '123-456-789',
+ *     consumerSecret: 'shhh-its-a-secret',
  *     callbackURL: 'https://www.example.net/auth/example/callback',
  *   },
  *   async ({ accessToken, accessTokenSecret, profile }) => {
@@ -80,8 +80,8 @@ export class Twitter1Strategy<User> extends Strategy<
 > {
   name = Twitter1StrategyDefaultName;
 
-  protected clientID: string;
-  protected clientSecret: string;
+  protected consumerKey: string;
+  protected consumerSecret: string;
   protected callbackURL: string;
   protected alwaysReauthorize: boolean;
 
@@ -90,8 +90,8 @@ export class Twitter1Strategy<User> extends Strategy<
     verify: StrategyVerifyCallback<User, Twitter1StrategyVerifyParams>
   ) {
     super(verify);
-    this.clientID = options.clientID;
-    this.clientSecret = options.clientSecret;
+    this.consumerKey = options.consumerKey;
+    this.consumerSecret = options.consumerSecret;
     this.callbackURL = options.callbackURL;
     this.alwaysReauthorize = options.alwaysReauthorize || false;
   }
@@ -264,7 +264,7 @@ export class Twitter1Strategy<User> extends Strategy<
   ) {
     const params = {
       ...headers,
-      oauth_consumer_key: this.clientID,
+      oauth_consumer_key: this.consumerKey,
       oauth_nonce: Twitter1Strategy.generateNonce(),
       oauth_timestamp: Twitter1Strategy.generateTimestamp(),
       oauth_version: "1.0",
@@ -281,7 +281,7 @@ export class Twitter1Strategy<User> extends Strategy<
     const signature_base = `${method}&${fixedEncodeURIComponent(
       url
     )}&${fixedEncodeURIComponent(parameters)}`;
-    const signing_key = `${this.clientSecret}&${accessTokenSecret || ""}`;
+    const signing_key = `${this.consumerSecret}&${accessTokenSecret || ""}`;
     const signed = Base64.stringify(hmacSHA1(signature_base, signing_key));
     return {
       ...params,
@@ -314,7 +314,7 @@ export class Twitter1Strategy<User> extends Strategy<
     userId: string;
     screenName: string;
   }> {
-    params.set("oauth_consumer_key", this.clientID);
+    params.set("oauth_consumer_key", this.consumerKey);
 
     debug("Fetch access token", tokenURL, params.toString());
     let response = await fetch(tokenURL, {

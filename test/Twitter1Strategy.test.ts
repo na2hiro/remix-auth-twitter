@@ -3,6 +3,7 @@ import fetchMock, { enableFetchMocks } from "jest-fetch-mock";
 
 import {
   Twitter1Strategy,
+  Twitter1StrategyOptions,
   Twitter1StrategyVerifyParams,
 } from "../src";
 
@@ -23,11 +24,10 @@ describe(Twitter1Strategy, () => {
   Date.now = jest.fn(() => 1_234_567_890_123);
 
   let options = Object.freeze({
-    clientID: "MY_CLIENT_ID",
-    clientSecret: "MY_CLIENT_SECRET",
+    consumerKey: "MY_CLIENT_ID",
+    consumerSecret: "MY_CLIENT_SECRET",
     callbackURL: "https://example.com/callback",
-    includeEmail: true,
-  });
+  } satisfies Twitter1StrategyOptions);
 
   interface User {
     id: number;

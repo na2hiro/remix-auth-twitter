@@ -18,7 +18,6 @@ const OPTIONS = {
   name: "twitter2",
 };
 
-// TODO: update README
 describe(Twitter2Strategy, () => {
   let verify = jest.fn();
   let sessionStorage = createCookieSessionStorage({

@@ -1,6 +1,6 @@
 # Remix Auth Twitter ![example branch parameter](https://github.com/na2hiro/remix-auth-twitter/actions/workflows/main.yml/badge.svg?branch=main)
 
-Remix Auth plugin for Twitter OAuth 1.0a.
+Remix Auth plugin for Twitter [OAuth 2.0](https://developer.twitter.com/en/docs/authentication/oauth-2-0/user-access-token) and [1.0a](https://developer.twitter.com/en/docs/authentication/oauth-1-0a/obtaining-user-access-tokens).
 
 ## Supported runtimes
 
@@ -24,34 +24,85 @@ npm install remix-auth-twitter remix-auth
 
 ### Prerequisites
 
-* Your app is registered to Twitter and has consumer key and secret issued https://developer.twitter.com/en/docs/authentication/oauth-1-0a/api-key-and-secret
+* Your app is registered to Twitter and you have client ID and secret (OAuth 2.0) or [consumer key and secret (OAuth 1.0a)](https://developer.twitter.com/en/docs/authentication/oauth-1-0a/api-key-and-secret)
 * Your app has [remix-auth](https://github.com/sergiodxa/remix-auth) set up and `authenticator` is provided:
   ```typescript
   // app/services/auth.server.ts
   export let authenticator = ...;
   ```
+  
+### Tell the Authenticator to use the Twitter strategy (OAuth 2.0)
 
-### Tell the Authenticator to use the Twitter strategy
+Note that profile is not passed to the verify function as it was done for 1.0a. You need to manually hit [/2/users/me](https://developer.twitter.com/en/docs/twitter-api/users/lookup/api-reference/get-users-me) for example in order to retrieve user's id, screen name, etc. The example uses [`twitter-api-v2`](https://github.com/PLhery/node-twitter-api-v2) to do so.
 
 ```typescript jsx
 // app/services/auth.server.ts
 import { Authenticator } from "remix-auth";
 import { sessionStorage } from "~/services/session.server";
-import { TwitterStrategy } from 'remix-auth-twitter';
+import { Twitter2Strategy } from 'remix-auth-twitter';
+import TwitterApi from 'twitter-api-v2';
 
 export let authenticator = new Authenticator<User>(sessionStorage);
 
-const clientID = process.env.TWITTER_CONSUMER_KEY;
-const clientSecret = process.env.TWITTER_CONSUMER_SECRET;
+const clientID = process.env.TWITTER_CLIENT_ID;
+const clientSecret = process.env.TWITTER_CLIENT_SECRET;
 if (!clientID || !clientSecret) {
+  throw new Error("TWITTER_CLIENT_ID and TWITTER_CLIENT_SECRET must be provided");
+}
+
+authenticator.use(
+  new Twitter2Strategy(
+    {
+      clientID,
+      clientSecret,
+      callbackURL: "https://my-app/login/callback",
+      // List of scopes you want to be granted. See 
+      scopes: ["users.read", "tweet.read", "tweet.write"]
+    },
+    // Define what to do when the user is authenticated
+    async ({ accessToken }) => {
+      // In this example I want to use Twitter as identity provider: so resolve identity from the token
+      const userClient = new TwitterApi(token);
+
+      const result = await userClient.v2.me({
+        "user.fields": ["profile_image_url"],
+      });
+      // should handle errors
+      const {id, username} = result.data;
+
+      // Return a user object to store in sessionStorage.
+      // You can also throw Error to reject the login
+      return await registerUser(
+        accessToken,
+        id,
+        username
+      );
+    }
+  ),
+)
+```
+
+### Tell the Authenticator to use the Twitter strategy (OAuth 1.0a)
+
+```typescript jsx
+// app/services/auth.server.ts
+import { Authenticator } from "remix-auth";
+import { sessionStorage } from "~/services/session.server";
+import { Twitter1Strategy } from 'remix-auth-twitter';
+
+export let authenticator = new Authenticator<User>(sessionStorage);
+
+const consumerKey = process.env.TWITTER_CONSUMER_KEY;
+const consumerSecret = process.env.TWITTER_CONSUMER_SECRET;
+if (!consumerKey || !consumerSecret) {
   throw new Error("TWITTER_CONSUMER_KEY and TWITTER_CONSUMER_SECRET must be provided");
 }
 
 authenticator.use(
-  new TwitterStrategy(
+  new Twitter1Strategy(
     {
-      clientID,
-      clientSecret,
+      consumerKey,
+      consumerSecret,
       callbackURL: "https://my-app/login/callback",
       alwaysReauthorize: false // otherwise, ask for permission every time
     },

@@ -35,7 +35,7 @@ export const Twitter2StrategyDefaultName = "twitter2";
  *
  * Applications must supply a `verify` callback, for which the function signature is:
  *
- *     function({accessToken, accessTokenSecret, profile}) { ... }
+ *     function({accessToken, accessTokenSecret}) { ... }
  *
  * The verify callback is responsible for finding or creating the user, and
  * returning the resulting user object to be stored in session.
@@ -43,8 +43,8 @@ export const Twitter2StrategyDefaultName = "twitter2";
  * An AuthorizationError should be raised to indicate an authentication failure.
  *
  * Options:
- * - `clientID`           identifies client to service provider
- * - `clientSecret`       secret used to establish ownership of the client identifier
+ * - `clientID`           "Client ID" under "OAuth 2.0 Client ID and Client Secret", which identifies client to service provider
+ * - `clientSecret`       "Client Secret" under "OAuth 2.0 Client ID and Client Secret", which is a secret used to establish ownership of the client identifier
  * - `callbackURL`        URL to which the service provider will redirect the user after obtaining authorization
  *                        If false, just let them login if they've once accepted the permission. (optional. default: false)
  *
@@ -55,8 +55,9 @@ export const Twitter2StrategyDefaultName = "twitter2";
  *     clientSecret: 'shhh-its-a-secret',
  *     callbackURL: 'https://www.example.net/auth/example/callback',
  *   },
- *   async ({ accessToken, accessTokenSecret, profile }) => {
- *     return await User.findOrCreate(profile.id, profile.email, ...);
+ *   async ({ accessToken }) => {
+ *     const me = await (use accessToken to fetch me via /2/users/me for example)
+ *     return await User.findOrCreate(, ...);
  *   }
  * ));
  */

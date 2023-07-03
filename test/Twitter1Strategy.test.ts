@@ -1,8 +1,7 @@
-import { createCookieSessionStorage } from "@remix-run/node";
+import { Request, Response, createCookieSessionStorage } from "@remix-run/node";
 import fetchMock, { enableFetchMocks } from "jest-fetch-mock";
 
 import {
-  Profile,
   Twitter1Strategy,
   Twitter1StrategyVerifyParams,
 } from "../src";

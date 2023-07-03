@@ -1,7 +1,25 @@
 import { generateRandomString } from "./utils";
 
 // https://developer.twitter.com/en/docs/authentication/oauth-2-0/authorization-code
-export type Scope = "tweet.read" | "tweet.write" | "users.read" | "users.write"; // TODO: add more
+export type Scope =
+  | "tweet.read"
+  | "tweet.write"
+  | "tweet.moderate.write"
+  | "users.read"
+  | "follows.read"
+  | "follows.write"
+  | "offline.access"
+  | "space.read"
+  | "mute.read"
+  | "mute.write"
+  | "like.read"
+  | "like.write"
+  | "list.read"
+  | "list.write"
+  | "block.read"
+  | "block.write"
+  | "bookmark.read"
+  | "bookmark.write";
 
 export function buildAuthorizeUrl(
   callbackURL: string,
@@ -47,14 +65,12 @@ export async function requestToken(
   const url = new URL("https://api.twitter.com/2/oauth2/token");
   url.search = params.toString();
 
-  const authHeader = `Basic ${btoa(`${clientId}:${clientSecret}`)}`;
-  console.log("authHeader: " + authHeader);
-  return await fetch(url, {
+  return await fetch(url.toString(), {
     headers: {
       //        "Content-Type": "application/x-www-form-urlencoded",
       // Use deprecated btoa to respect Cloudflare environment
       // https://developers.cloudflare.com/workers/runtime-apis/web-standards/
-      Authorization: authHeader,
+      Authorization: `Basic ${btoa(`${clientId}:${clientSecret}`)}`,
     },
     method: "POST",
   });

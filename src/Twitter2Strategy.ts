@@ -18,6 +18,7 @@ export interface Twitter2StrategyOptions {
   clientID: string;
   clientSecret: string;
   callbackURL: string;
+  scopes: Scope[];
 }
 
 export interface Twitter2StrategyVerifyParams {
@@ -68,6 +69,7 @@ export class Twitter2Strategy<User> extends Strategy<
   protected clientID: string;
   protected clientSecret: string;
   protected callbackURL: string;
+  protected scopes: Scope[];
 
   constructor(
     options: Twitter2StrategyOptions,
@@ -77,6 +79,7 @@ export class Twitter2Strategy<User> extends Strategy<
     this.clientID = options.clientID;
     this.clientSecret = options.clientSecret;
     this.callbackURL = options.callbackURL;
+    this.scopes = options.scopes;
   }
 
   async authenticate(
@@ -104,16 +107,15 @@ export class Twitter2Strategy<User> extends Strategy<
     // Before user navigates to login page: Redirect to login page
     if (url.pathname !== callbackURL.pathname) {
       // Step 1: Construct an Authorize URL
-      const scopes: Scope[] = ["tweet.write", "tweet.read", "users.read"]; // TODO: get
-
-      // Step 2: GET oauth2/authorize
       const { url, state, challenge } = buildAuthorizeUrl(
         this.callbackURL,
-        scopes,
+        this.scopes,
         this.clientID
       );
       session.set("auth-twitter_state", state);
       session.set("auth-twitter_challenge", challenge);
+
+      // Step 2: GET oauth2/authorize
       throw redirect(url.toString(), {
         headers: {
           "Set-Cookie": await sessionStorage.commitSession(session),
@@ -121,9 +123,9 @@ export class Twitter2Strategy<User> extends Strategy<
       });
     }
 
-    // User rejected the app
     const errorFromAuth = url.searchParams.get("error");
     if (errorFromAuth === "access_denied") {
+      // User rejected the app
       debug("Denied");
       return await this.failure(
         "Please authorize the app",
@@ -132,15 +134,28 @@ export class Twitter2Strategy<User> extends Strategy<
         options
       );
     }
+    const error = url.searchParams.get("error");
+    if (error) {
+      debug("error", error);
+      throw json(
+        { message: "Error from auth response: " + error },
+        { status: 400 }
+      );
+    }
     const code = url.searchParams.get("code");
-    if (!code)
+    if (!code) {
+      debug("code missing");
       throw json(
         { message: "Missing code from auth response." },
         { status: 400 }
       );
+    }
+
     const state = url.searchParams.get("state");
-    if (session.get("auth-twitter_state") !== state)
+    if (session.get("auth-twitter_state") !== state) {
+      debug("state mismatch", state, session.get("auth-twitter_state"));
       throw json({ message: "State doesn't match" }, { status: 400 });
+    }
 
     // Step 3: POST oauth2/token - Access Token
     const response = await requestToken(

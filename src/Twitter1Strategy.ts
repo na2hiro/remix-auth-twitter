@@ -325,7 +325,6 @@ export class Twitter1Strategy<User> extends Strategy<
 
     if (!response.ok) {
       let body = await response.text();
-      // TODO: ここにくる
       debug("error! " + body);
       throw new Response(body, { status: 401 });
     }

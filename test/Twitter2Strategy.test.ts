@@ -1,7 +1,7 @@
-import { createCookieSessionStorage } from "@remix-run/node";
+import { Request, Response, createCookieSessionStorage } from "@remix-run/node";
 import fetchMock, { enableFetchMocks } from "jest-fetch-mock";
 
-import { Twitter2Strategy, Twitter2StrategyVerifyParams } from "../src";
+import { Twitter2Strategy, Twitter2StrategyOptions, Twitter2StrategyVerifyParams } from "../src";
 
 jest.mock("../src/utils");
 
@@ -18,9 +18,7 @@ const OPTIONS = {
   name: "twitter2",
 };
 
-// TODO: fix broken tests and finish up
-// TODO: update README
-describe.skip(Twitter2Strategy, () => {
+describe(Twitter2Strategy, () => {
   let verify = jest.fn();
   let sessionStorage = createCookieSessionStorage({
     cookie: { secrets: ["s3cr3t"] },
@@ -31,8 +29,8 @@ describe.skip(Twitter2Strategy, () => {
     clientID: "MY_CLIENT_ID",
     clientSecret: "MY_CLIENT_SECRET",
     callbackURL: "https://example.com/callback",
-    includeEmail: true,
-  });
+    scopes: ["tweet.write", "tweet.read", "users.read"],
+  } satisfies Twitter2StrategyOptions);
 
   interface User {
     id: number;
@@ -67,7 +65,7 @@ describe.skip(Twitter2Strategy, () => {
     let strategy = new Twitter2Strategy<User>(options, verify);
 
     let session = await sessionStorage.getSession();
-    session.set("user", { id: 123 } as User);
+    session.set("user", { id: 123 } satisfies User);
 
     let request = new Request("https://example.com/login", {
       headers: { cookie: await sessionStorage.commitSession(session) },
@@ -121,6 +119,24 @@ describe.skip(Twitter2Strategy, () => {
     }
   });
 
+  test("should throw if `error` is on the callback URL params", async () => {
+    let strategy = new Twitter2Strategy<User>(options, verify);
+    let request = new Request(
+      "https://example.com/callback?error=invalid_scope&oauth_verifier=VERIFIER"
+    );
+    //
+    try {
+      await strategy.authenticate(request, sessionStorage, OPTIONS);
+      fail("Should throw Response");
+    } catch (error) {
+      if (!(error instanceof Response)) throw error;
+      expect(error.status).toEqual(400);
+      expect(await error.json()).toEqual({
+        message: "Error from auth response: invalid_scope",
+      });
+    }
+  });
+
   test("should throw if `code` is not on the callback URL params", async () => {
     let strategy = new Twitter2Strategy<User>(options, verify);
     let request = new Request(
@@ -164,6 +180,7 @@ describe.skip(Twitter2Strategy, () => {
     );
     const session = await sessionStorage.getSession();
     session.set("auth-twitter_state", "ANOTHER_STATE");
+    request.headers.set("Cookie", await sessionStorage.commitSession(session));
 
     verify.mockImplementationOnce(
       ({ accessToken, expiresIn, scope, context }) => {
@@ -184,7 +201,6 @@ describe.skip(Twitter2Strategy, () => {
       });
     }
   });
-
   test("should return access token", async () => {
     fetchMock.mockResponse(async (req) => {
       const url = new URL(req.url);
@@ -208,7 +224,7 @@ describe.skip(Twitter2Strategy, () => {
 
     let strategy = new Twitter2Strategy<User>(options, verify);
     let request = new Request(
-      "https://example.com/callback?oauth_token=TOKEN&oauth_verifier=VERIFIER"
+      "https://example.com/callback?code=TOKEN&state=STATE"
     );
 
     verify.mockImplementationOnce(
@@ -218,22 +234,25 @@ describe.skip(Twitter2Strategy, () => {
         };
       }
     );
+    const session = await sessionStorage.getSession();
+    session.set("auth-twitter_state", "STATE");
+    request.headers.set("Cookie", await sessionStorage.commitSession(session));
 
     const user = await strategy.authenticate(request, sessionStorage, OPTIONS);
 
     expect(user).toEqual({
-      screenName: "na2hiro",
+      userName: "na2hiro",
     });
 
     expect(fetchMock.mock.calls[0][0]).toMatchInlineSnapshot(
-      `"https://api.twitter.com/oauth/access_token"`
-    );
-    expect(fetchMock.mock.calls[0][1]!.body!.toString()).toMatchInlineSnapshot(
-      `"oauth_token=TOKEN&oauth_verifier=VERIFIER&oauth_consumer_key=MY_CLIENT_ID"`
+      `"https://api.twitter.com/2/oauth2/token?code=TOKEN&grant_type=authorization_code&client_id=MY_CLIENT_ID&redirect_uri=https%3A%2F%2Fexample.com%2Fcallback&code_verifier=undefined"`
     );
 
     expect(verify).toHaveBeenLastCalledWith({
-      accessToken: "TOKEN",
+      accessToken: "sth",
+      context: undefined,
+      expiresIn: 7200,
+      scope: "tweet.write",
     } as Twitter2StrategyVerifyParams);
   });
 
@@ -259,22 +278,25 @@ describe.skip(Twitter2Strategy, () => {
 
     let strategy = new Twitter2Strategy<User>(options, verify);
     let request = new Request(
-      "https://example.com/callback?oauth_token=TOKEN&oauth_verifier=VERIFIER"
+      "https://example.com/callback?code=TOKEN&state=STATE"
     );
 
     verify.mockImplementationOnce(() => {
       throw new Error("Nah you're banned, go away.");
     });
+    const session = await sessionStorage.getSession();
+    session.set("auth-twitter_state", "STATE");
+    request.headers.set("Cookie", await sessionStorage.commitSession(session));
 
     try {
       await strategy.authenticate(request, sessionStorage, OPTIONS);
       fail("Should have thrown");
     } catch (error) {
       if (!(error instanceof Response)) throw error;
-      expect(error.status).toEqual(401);
       expect(await error.json()).toEqual({
         message: "Nah you're banned, go away.",
       });
+      expect(error.status).toEqual(401);
     }
   });
 });

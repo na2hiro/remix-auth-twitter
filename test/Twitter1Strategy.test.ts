@@ -1,11 +1,12 @@
-import { createCookieSessionStorage } from "@remix-run/node";
+import { Request, Response, createCookieSessionStorage } from "@remix-run/node";
 import fetchMock, { enableFetchMocks } from "jest-fetch-mock";
 
 import {
-  Profile,
   Twitter1Strategy,
+  Twitter1StrategyOptions,
   Twitter1StrategyVerifyParams,
 } from "../src";
+import { Profile } from "../src/Twitter1Strategy";
 
 const OPTIONS = {
   sessionKey: "user",
@@ -24,11 +25,10 @@ describe(Twitter1Strategy, () => {
   Date.now = jest.fn(() => 1_234_567_890_123);
 
   let options = Object.freeze({
-    clientID: "MY_CLIENT_ID",
-    clientSecret: "MY_CLIENT_SECRET",
+    consumerKey: "MY_CLIENT_ID",
+    consumerSecret: "MY_CLIENT_SECRET",
     callbackURL: "https://example.com/callback",
-    includeEmail: true,
-  });
+  } satisfies Twitter1StrategyOptions);
 
   interface User {
     id: number;
@@ -64,7 +64,7 @@ describe(Twitter1Strategy, () => {
     let strategy = new Twitter1Strategy<User>(options, verify);
 
     let session = await sessionStorage.getSession();
-    session.set("user", { id: 123 } as User);
+    session.set("user", { id: 123 } satisfies User);
 
     let request = new Request("https://example.com/login", {
       headers: { cookie: await sessionStorage.commitSession(session) },
@@ -244,8 +244,8 @@ describe(Twitter1Strategy, () => {
       profile: {
         userId: "123",
         screenName: "na2hiro",
-      } as Profile,
-    } as Twitter1StrategyVerifyParams);
+      } satisfies Profile,
+    } satisfies Twitter1StrategyVerifyParams);
   });
 
   test("should fail if verify throws Error", async () => {

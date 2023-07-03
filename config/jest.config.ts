@@ -9,12 +9,8 @@ const config: Config.InitialOptions = {
   collectCoverageFrom: ["<rootDir>/src/**/*.ts"],
   setupFilesAfterEnv: ["<rootDir>/config/jest/setup.ts"],
   testMatch: ["<rootDir>/test/**/*.test.ts"],
-  transform: {
-    "\\.[jt]sx?$": [
-      "babel-jest",
-      { configFile: "./config/jest/babel.config.js" },
-    ],
-  },
+  preset: "ts-jest",
+  testEnvironment: "node",
 };
 
 export default config;

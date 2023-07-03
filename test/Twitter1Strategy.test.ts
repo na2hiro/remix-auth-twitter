@@ -6,6 +6,7 @@ import {
   Twitter1StrategyOptions,
   Twitter1StrategyVerifyParams,
 } from "../src";
+import { Profile } from "../src/Twitter1Strategy";
 
 const OPTIONS = {
   sessionKey: "user",
@@ -63,7 +64,7 @@ describe(Twitter1Strategy, () => {
     let strategy = new Twitter1Strategy<User>(options, verify);
 
     let session = await sessionStorage.getSession();
-    session.set("user", { id: 123 } as User);
+    session.set("user", { id: 123 } satisfies User);
 
     let request = new Request("https://example.com/login", {
       headers: { cookie: await sessionStorage.commitSession(session) },
@@ -243,8 +244,8 @@ describe(Twitter1Strategy, () => {
       profile: {
         userId: "123",
         screenName: "na2hiro",
-      } as Profile,
-    } as Twitter1StrategyVerifyParams);
+      } satisfies Profile,
+    } satisfies Twitter1StrategyVerifyParams);
   });
 
   test("should fail if verify throws Error", async () => {

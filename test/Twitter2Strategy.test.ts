@@ -65,7 +65,7 @@ describe(Twitter2Strategy, () => {
     let strategy = new Twitter2Strategy<User>(options, verify);
 
     let session = await sessionStorage.getSession();
-    session.set("user", { id: 123 } as User);
+    session.set("user", { id: 123 } satisfies User);
 
     let request = new Request("https://example.com/login", {
       headers: { cookie: await sessionStorage.commitSession(session) },

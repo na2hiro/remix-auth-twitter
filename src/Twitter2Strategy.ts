@@ -23,6 +23,7 @@ export interface Twitter2StrategyOptions {
 
 export interface Twitter2StrategyVerifyParams {
   accessToken: string;
+  refreshToken: string;
   expiresIn: number;
   scope: string;
   context?: AppLoadContext;
@@ -184,6 +185,7 @@ export class Twitter2Strategy<User> extends Strategy<
     try {
       user = await this.verify({
         accessToken: access_token,
+        refreshToken: refresh_token,
         expiresIn: expires_in,
         scope,
         context: options.context,

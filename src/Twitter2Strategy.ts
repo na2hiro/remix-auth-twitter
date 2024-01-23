@@ -179,7 +179,7 @@ export class Twitter2Strategy<User> extends Strategy<
     }
     const body = await response.json();
     debug("access token " + JSON.stringify(body));
-    const { expires_in, access_token, scope } = body;
+    const { expires_in, access_token, scope, refresh_token } = body;
 
     // Verify the user and return it, or redirect
     try {

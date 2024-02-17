@@ -213,6 +213,7 @@ describe(Twitter2Strategy, () => {
               token_type: "bearer",
               expires_in: 7200,
               access_token: "sth",
+              refresh_token: "refresh",
               scope: "tweet.write",
             }),
             init: {
@@ -229,7 +230,7 @@ describe(Twitter2Strategy, () => {
     );
 
     verify.mockImplementationOnce(
-      ({ accessToken, expiresIn, scope, context }) => {
+      ({ accessToken, refreshToken, expiresIn, scope, context }) => {
         return {
           userName: fakeFetchUserName(accessToken),
         };
@@ -251,6 +252,7 @@ describe(Twitter2Strategy, () => {
 
     expect(verify).toHaveBeenLastCalledWith({
       accessToken: "sth",
+      refreshToken: "refresh",
       context: undefined,
       expiresIn: 7200,
       scope: "tweet.write",

@@ -7,6 +7,7 @@ import {
   Twitter1StrategyVerifyParams,
 } from "../src";
 import { Profile } from "../src/Twitter1Strategy";
+import { assertResponse } from "./testUtils";
 
 const OPTIONS = {
   sessionKey: "user",
@@ -76,7 +77,7 @@ describe(Twitter1Strategy, () => {
         successRedirect: "/dashboard",
       });
     } catch (error) {
-      if (!(error instanceof Response)) throw error;
+      assertResponse(error);
       expect(error.headers.get("Location")).toBe("/dashboard");
     }
   });
@@ -97,7 +98,7 @@ describe(Twitter1Strategy, () => {
       await strategy.authenticate(request, sessionStorage, OPTIONS);
       fail("should throw Response");
     } catch (error) {
-      if (!(error instanceof Response)) throw error;
+      assertResponse(error);
 
       expect(fetchMock.mock.calls[0][0]).toMatchInlineSnapshot(
         `"https://api.twitter.com/oauth/request_token?oauth_callback=https%3A%2F%2Fexample.com%2Fcallback&oauth_consumer_key=MY_CLIENT_ID&oauth_nonce=abcdefg&oauth_timestamp=NaN&oauth_version=1.0&oauth_signature_method=HMAC-SHA1&oauth_signature=1X41i0CFd3rGyZCbyb%2BH5WPMbts%3D"`
@@ -132,7 +133,7 @@ describe(Twitter1Strategy, () => {
       await strategy.authenticate(request, sessionStorage, OPTIONS);
       fail("Should throw Response");
     } catch (error) {
-      if (!(error instanceof Response)) throw error;
+      assertResponse(error);
 
       expect(fetchMock.mock.calls[0][0]).toMatchInlineSnapshot(
         `"https://api.twitter.com/oauth/request_token?oauth_callback=https%3A%2F%2Fexample.com%2Fcallback&oauth_consumer_key=MY_CLIENT_ID&oauth_nonce=abcdefg&oauth_timestamp=NaN&oauth_version=1.0&oauth_signature_method=HMAC-SHA1&oauth_signature=1X41i0CFd3rGyZCbyb%2BH5WPMbts%3D"`
@@ -152,7 +153,7 @@ describe(Twitter1Strategy, () => {
       await strategy.authenticate(request, sessionStorage, OPTIONS);
       fail("Should throw Response");
     } catch (error) {
-      if (!(error instanceof Response)) throw error;
+      assertResponse(error);
       expect(error.status).toEqual(401);
       expect(await error.json()).toEqual({
         message: "Please authorize the app",
@@ -169,7 +170,7 @@ describe(Twitter1Strategy, () => {
       await strategy.authenticate(request, sessionStorage, OPTIONS);
       fail("Should throw Response");
     } catch (error) {
-      if (!(error instanceof Response)) throw error;
+      assertResponse(error);
       expect(error.status).toEqual(400);
       expect(await error.json()).toEqual({
         message: "Missing oauth token from auth response.",
@@ -186,7 +187,7 @@ describe(Twitter1Strategy, () => {
       await strategy.authenticate(request, sessionStorage, OPTIONS);
       fail("Should throw Response");
     } catch (error) {
-      if (!(error instanceof Response)) throw error;
+      assertResponse(error);
       expect(error.status).toEqual(400);
       expect(await error.json()).toEqual({
         message: "Missing oauth verifier from auth response.",
@@ -277,7 +278,7 @@ describe(Twitter1Strategy, () => {
       await strategy.authenticate(request, sessionStorage, OPTIONS);
       fail("Should have thrown");
     } catch (error) {
-      if (!(error instanceof Response)) throw error;
+      assertResponse(error);
       expect(error.status).toEqual(401);
       expect(await error.json()).toEqual({
         message: "Nah you're banned, go away.",

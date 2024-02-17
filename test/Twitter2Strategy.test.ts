@@ -2,6 +2,7 @@ import { Request, Response, createCookieSessionStorage } from "@remix-run/node";
 import fetchMock, { enableFetchMocks } from "jest-fetch-mock";
 
 import { Twitter2Strategy, Twitter2StrategyOptions, Twitter2StrategyVerifyParams } from "../src";
+import { assertResponse } from "./testUtils";
 
 jest.mock("../src/utils");
 
@@ -77,7 +78,7 @@ describe(Twitter2Strategy, () => {
         successRedirect: "/dashboard",
       });
     } catch (error) {
-      if (!(error instanceof Response)) throw error;
+      assertResponse(error);
       expect(error.headers.get("Location")).toBe("/dashboard");
     }
   });
@@ -91,7 +92,7 @@ describe(Twitter2Strategy, () => {
       await strategy.authenticate(request, sessionStorage, OPTIONS);
       fail("Should throw Response");
     } catch (error) {
-      if (!(error instanceof Response)) throw error;
+      assertResponse(error);
 
       expect(fetchMock.mock.calls).toHaveLength(0);
 
@@ -111,7 +112,7 @@ describe(Twitter2Strategy, () => {
       await strategy.authenticate(request, sessionStorage, OPTIONS);
       fail("Should throw Response");
     } catch (error) {
-      if (!(error instanceof Response)) throw error;
+      assertResponse(error);
       expect(error.status).toEqual(401);
       expect(await error.json()).toEqual({
         message: "Please authorize the app",
@@ -129,7 +130,7 @@ describe(Twitter2Strategy, () => {
       await strategy.authenticate(request, sessionStorage, OPTIONS);
       fail("Should throw Response");
     } catch (error) {
-      if (!(error instanceof Response)) throw error;
+      assertResponse(error);
       expect(error.status).toEqual(400);
       expect(await error.json()).toEqual({
         message: "Error from auth response: invalid_scope",
@@ -146,7 +147,7 @@ describe(Twitter2Strategy, () => {
       await strategy.authenticate(request, sessionStorage, OPTIONS);
       fail("Should throw Response");
     } catch (error) {
-      if (!(error instanceof Response)) throw error;
+      assertResponse(error);
       expect(error.status).toEqual(400);
       expect(await error.json()).toEqual({
         message: "Missing code from auth response.",
@@ -194,7 +195,7 @@ describe(Twitter2Strategy, () => {
       await strategy.authenticate(request, sessionStorage, OPTIONS);
       fail("Should throw Response");
     } catch (error) {
-      if (!(error instanceof Response)) throw error;
+      assertResponse(error);
       expect(error.status).toEqual(400);
       expect(await error.json()).toEqual({
         message: "State doesn't match",
@@ -212,6 +213,7 @@ describe(Twitter2Strategy, () => {
               token_type: "bearer",
               expires_in: 7200,
               access_token: "sth",
+              refresh_token: "refresh",
               scope: "tweet.write",
             }),
             init: {
@@ -228,7 +230,7 @@ describe(Twitter2Strategy, () => {
     );
 
     verify.mockImplementationOnce(
-      ({ accessToken, expiresIn, scope, context }) => {
+      ({ accessToken, refreshToken, expiresIn, scope, context }) => {
         return {
           userName: fakeFetchUserName(accessToken),
         };
@@ -250,6 +252,7 @@ describe(Twitter2Strategy, () => {
 
     expect(verify).toHaveBeenLastCalledWith({
       accessToken: "sth",
+      refreshToken: "refresh",
       context: undefined,
       expiresIn: 7200,
       scope: "tweet.write",
@@ -292,7 +295,7 @@ describe(Twitter2Strategy, () => {
       await strategy.authenticate(request, sessionStorage, OPTIONS);
       fail("Should have thrown");
     } catch (error) {
-      if (!(error instanceof Response)) throw error;
+      assertResponse(error);
       expect(await error.json()).toEqual({
         message: "Nah you're banned, go away.",
       });

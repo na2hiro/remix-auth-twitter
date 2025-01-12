@@ -17,10 +17,10 @@ import { fixedEncodeURIComponent } from "./utils";
 
 let debug = createDebug("TwitterStrategy");
 
-const requestTokenURL = "https://api.twitter.com/oauth/request_token";
-const authorizationURL = "https://api.twitter.com/oauth/authorize";
-const authenticationURL = "https://api.twitter.com/oauth/authenticate";
-const tokenURL = "https://api.twitter.com/oauth/access_token";
+const requestTokenURL = "https://api.x.com/oauth/request_token";
+const authorizationURL = "https://api.x.com/oauth/authorize";
+const authenticationURL = "https://api.x.com/oauth/authenticate";
+const tokenURL = "https://api.x.com/oauth/access_token";
 
 export interface Twitter1StrategyOptions {
   consumerKey: string;
@@ -44,7 +44,7 @@ export interface Twitter1StrategyVerifyParams {
 export const Twitter1StrategyDefaultName = "twitter1";
 
 /**
- * Twitter's OAuth 1.0a login (https://developer.twitter.com/en/docs/authentication/oauth-1-0a/obtaining-user-access-tokens)
+ * Twitter's OAuth 1.0a login (https://developer.x.com/en/docs/authentication/oauth-1-0a/obtaining-user-access-tokens)
  *
  * Applications must supply a `verify` callback, for which the function signature is:
  *

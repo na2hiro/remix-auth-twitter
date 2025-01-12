@@ -1,6 +1,6 @@
 import { generateRandomString } from "./utils";
 
-// https://developer.twitter.com/en/docs/authentication/oauth-2-0/authorization-code
+// https://developer.x.com/en/docs/authentication/oauth-2-0/authorization-code
 export type Scope =
   | "tweet.read"
   | "tweet.write"
@@ -38,7 +38,7 @@ export function buildAuthorizeUrl(
     code_challenge_method: "plain",
   });
 
-  let url = new URL("https://twitter.com/i/oauth2/authorize");
+  let url = new URL("https://x.com/i/oauth2/authorize");
   url.search = params.toString();
 
   return { url, state, challenge };
@@ -62,7 +62,7 @@ export async function requestToken(
     code_verifier: challenge,
   });
 
-  const url = new URL("https://api.twitter.com/2/oauth2/token");
+  const url = new URL("https://api.x.com/2/oauth2/token");
   url.search = params.toString();
 
   return await fetch(url.toString(), {

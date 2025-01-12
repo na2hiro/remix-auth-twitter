@@ -98,7 +98,7 @@ describe(Twitter2Strategy, () => {
 
       let redirect = error.headers.get("Location");
       expect(redirect).toMatchInlineSnapshot(
-        `"https://twitter.com/i/oauth2/authorize?response_type=code&client_id=MY_CLIENT_ID&redirect_uri=https%3A%2F%2Fexample.com%2Fcallback&scope=tweet.write+tweet.read+users.read&state=MOCKED_RANDOM_CHARS_16&code_challenge=MOCKED_RANDOM_CHARS_43&code_challenge_method=plain"`
+        `"https://x.com/i/oauth2/authorize?response_type=code&client_id=MY_CLIENT_ID&redirect_uri=https%3A%2F%2Fexample.com%2Fcallback&scope=tweet.write+tweet.read+users.read&state=MOCKED_RANDOM_CHARS_16&code_challenge=MOCKED_RANDOM_CHARS_43&code_challenge_method=plain"`
       );
     }
   });
@@ -159,7 +159,7 @@ describe(Twitter2Strategy, () => {
       const url = new URL(req.url);
       url.search = "";
       switch (url.toString()) {
-        case "https://api.twitter.com/2/oauth2/token":
+        case "https://api.x.com/2/oauth2/token":
           return {
             body: JSON.stringify({
               token_type: "bearer",
@@ -207,7 +207,7 @@ describe(Twitter2Strategy, () => {
       const url = new URL(req.url);
       url.search = "";
       switch (url.toString()) {
-        case "https://api.twitter.com/2/oauth2/token":
+        case "https://api.x.com/2/oauth2/token":
           return {
             body: JSON.stringify({
               token_type: "bearer",
@@ -247,7 +247,7 @@ describe(Twitter2Strategy, () => {
     });
 
     expect(fetchMock.mock.calls[0][0]).toMatchInlineSnapshot(
-      `"https://api.twitter.com/2/oauth2/token?code=TOKEN&grant_type=authorization_code&client_id=MY_CLIENT_ID&redirect_uri=https%3A%2F%2Fexample.com%2Fcallback&code_verifier=undefined"`
+      `"https://api.x.com/2/oauth2/token?code=TOKEN&grant_type=authorization_code&client_id=MY_CLIENT_ID&redirect_uri=https%3A%2F%2Fexample.com%2Fcallback&code_verifier=undefined"`
     );
 
     expect(verify).toHaveBeenLastCalledWith({
@@ -264,7 +264,7 @@ describe(Twitter2Strategy, () => {
       const url = new URL(req.url);
       url.search = "";
       switch (url.toString()) {
-        case "https://api.twitter.com/2/oauth2/token":
+        case "https://api.x.com/2/oauth2/token":
           return {
             body: JSON.stringify({
               access_token: "TOKEN",

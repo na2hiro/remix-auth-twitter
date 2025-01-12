@@ -1,6 +1,6 @@
 # Remix Auth Twitter ![example branch parameter](https://github.com/na2hiro/remix-auth-twitter/actions/workflows/main.yml/badge.svg?branch=main)
 
-Remix Auth plugin for Twitter [OAuth 2.0](https://developer.twitter.com/en/docs/authentication/oauth-2-0/user-access-token) and [1.0a](https://developer.twitter.com/en/docs/authentication/oauth-1-0a/obtaining-user-access-tokens).
+Remix Auth plugin for Twitter [OAuth 2.0](https://developer.x.com/en/docs/authentication/oauth-2-0/user-access-token) and [1.0a](https://developer.x.com/en/docs/authentication/oauth-1-0a/obtaining-user-access-tokens).
 
 ## Supported runtimes
 
@@ -9,9 +9,9 @@ Remix Auth plugin for Twitter [OAuth 2.0](https://developer.twitter.com/en/docs/
 | Node.js    | ✅          |
 | Cloudflare | ✅          |
 
-## Demo
+## Example
 
-Try out ~~[live demo](https://remix-auth-twitter-example.na2hiro.workers.dev/)~~ Currently it doesn't work due to updates on Twitter APIs. You could try cloning the [source code](https://github.com/na2hiro/remix-auth-twitter-example)
+See [example repo](https://github.com/na2hiro/remix-auth-twitter-example)
 
 ## Installation
 
@@ -20,11 +20,21 @@ Install `remix-auth-twitter` npm module along with `remix-auth`:
 ```shell
 npm install remix-auth-twitter remix-auth
 ```
+
+### Compatibility
+
+| remix-auth-twitter | remix-auth | other notes           | 
+|--------------------|------------|-----------------------|
+| @2                 | @3         | Points to twitter.com |
+| @3                 | @3         | Points to x.com       |
+| @4 (coming soon)   | @4         | Points to x.com       |
+
+
 ## How to use
 
 ### Prerequisites
 
-* Your app is registered to Twitter and you have client ID and secret (OAuth 2.0) or [consumer key and secret (OAuth 1.0a)](https://developer.twitter.com/en/docs/authentication/oauth-1-0a/api-key-and-secret)
+* Your app is registered to Twitter and you have client ID and secret (OAuth 2.0) or [consumer key and secret (OAuth 1.0a)](https://developer.x.com/en/docs/authentication/oauth-1-0a/api-key-and-secret)
 * Your app has [remix-auth](https://github.com/sergiodxa/remix-auth) set up and `authenticator` is provided:
   ```typescript
   // app/services/auth.server.ts
@@ -33,7 +43,7 @@ npm install remix-auth-twitter remix-auth
   
 ### Tell the Authenticator to use the Twitter strategy (OAuth 2.0)
 
-Note that profile is not passed to the verify function as it was done for 1.0a. You need to manually hit [/2/users/me](https://developer.twitter.com/en/docs/twitter-api/users/lookup/api-reference/get-users-me) for example in order to retrieve user's id, screen name, etc. The example uses [`twitter-api-v2`](https://github.com/PLhery/node-twitter-api-v2) to do so.
+Note that profile is not passed to the verify function as it was done for 1.0a. You need to manually hit [/2/users/me](https://developer.x.com/en/docs/twitter-api/users/lookup/api-reference/get-users-me) for example in order to retrieve user's id, screen name, etc. The example uses [`twitter-api-v2`](https://github.com/PLhery/node-twitter-api-v2) to do so.
 
 ```typescript jsx
 // app/services/auth.server.ts

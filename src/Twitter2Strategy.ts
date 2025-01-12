@@ -32,7 +32,7 @@ export interface Twitter2StrategyVerifyParams {
 export const Twitter2StrategyDefaultName = "twitter2";
 
 /**
- * Twitter's OAuth 2.0 login (https://developer.twitter.com/en/docs/authentication/oauth-2-0/user-access-token)
+ * Twitter's OAuth 2.0 login (https://developer.x.com/en/docs/authentication/oauth-2-0/user-access-token)
  *
  * Applications must supply a `verify` callback, for which the function signature is:
  *

@@ -101,7 +101,7 @@ describe(Twitter1Strategy, () => {
       assertResponse(error);
 
       expect(fetchMock.mock.calls[0][0]).toMatchInlineSnapshot(
-        `"https://api.twitter.com/oauth/request_token?oauth_callback=https%3A%2F%2Fexample.com%2Fcallback&oauth_consumer_key=MY_CLIENT_ID&oauth_nonce=abcdefg&oauth_timestamp=NaN&oauth_version=1.0&oauth_signature_method=HMAC-SHA1&oauth_signature=1X41i0CFd3rGyZCbyb%2BH5WPMbts%3D"`
+        `"https://api.x.com/oauth/request_token?oauth_callback=https%3A%2F%2Fexample.com%2Fcallback&oauth_consumer_key=MY_CLIENT_ID&oauth_nonce=abcdefg&oauth_timestamp=NaN&oauth_version=1.0&oauth_signature_method=HMAC-SHA1&oauth_signature=fbuRy0FPvsrz4o%2Bzpbw%2F%2Bq8VmCw%3D"`
       );
 
       expect(error.status).toBe(401);
@@ -118,7 +118,7 @@ describe(Twitter1Strategy, () => {
       const url = new URL(req.url);
       url.search = "";
       switch (url.toString()) {
-        case "https://api.twitter.com/oauth/request_token":
+        case "https://api.x.com/oauth/request_token":
           return {
             body: "oauth_token=REQUEST_TOKEN&oauth_token_secret=REQUEST_TOKEN_SECRET&oauth_callback_confirmed=true",
             init: {
@@ -136,12 +136,12 @@ describe(Twitter1Strategy, () => {
       assertResponse(error);
 
       expect(fetchMock.mock.calls[0][0]).toMatchInlineSnapshot(
-        `"https://api.twitter.com/oauth/request_token?oauth_callback=https%3A%2F%2Fexample.com%2Fcallback&oauth_consumer_key=MY_CLIENT_ID&oauth_nonce=abcdefg&oauth_timestamp=NaN&oauth_version=1.0&oauth_signature_method=HMAC-SHA1&oauth_signature=1X41i0CFd3rGyZCbyb%2BH5WPMbts%3D"`
+        `"https://api.x.com/oauth/request_token?oauth_callback=https%3A%2F%2Fexample.com%2Fcallback&oauth_consumer_key=MY_CLIENT_ID&oauth_nonce=abcdefg&oauth_timestamp=NaN&oauth_version=1.0&oauth_signature_method=HMAC-SHA1&oauth_signature=fbuRy0FPvsrz4o%2Bzpbw%2F%2Bq8VmCw%3D"`
       );
 
       let redirect = error.headers.get("Location");
       expect(redirect).toMatchInlineSnapshot(
-        `"https://api.twitter.com/oauth/authenticate?oauth_token=REQUEST_TOKEN"`
+        `"https://api.x.com/oauth/authenticate?oauth_token=REQUEST_TOKEN"`
       );
     }
   });
@@ -200,7 +200,7 @@ describe(Twitter1Strategy, () => {
       const url = new URL(req.url);
       url.search = "";
       switch (url.toString()) {
-        case "https://api.twitter.com/oauth/access_token":
+        case "https://api.x.com/oauth/access_token":
           return {
             body: "oauth_token=ACCESS_TOKEN&oauth_token_secret=ACCESS_TOKEN_SECRET&screen_name=na2hiro&user_id=123",
             init: {
@@ -233,7 +233,7 @@ describe(Twitter1Strategy, () => {
     });
 
     expect(fetchMock.mock.calls[0][0]).toMatchInlineSnapshot(
-      `"https://api.twitter.com/oauth/access_token"`
+      `"https://api.x.com/oauth/access_token"`
     );
     expect(fetchMock.mock.calls[0][1]!.body!.toString()).toMatchInlineSnapshot(
       `"oauth_token=TOKEN&oauth_verifier=VERIFIER&oauth_consumer_key=MY_CLIENT_ID"`
@@ -254,7 +254,7 @@ describe(Twitter1Strategy, () => {
       const url = new URL(req.url);
       url.search = "";
       switch (url.toString()) {
-        case "https://api.twitter.com/oauth/access_token":
+        case "https://api.x.com/oauth/access_token":
           return {
             body: "oauth_token=ACCESS_TOKEN&oauth_token_secret=ACCESS_TOKEN_SECRET",
             init: {

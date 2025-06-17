@@ -1,23 +1,15 @@
 import {
   Twitter1Strategy,
-  Twitter1StrategyVerifyParams,
-  Twitter1StrategyOptions,
   Twitter1StrategyDefaultName,
-} from "./Twitter1Strategy";
+} from "./Twitter1Strategy.js";
 import {
   Twitter2Strategy,
-  Twitter2StrategyVerifyParams,
-  Twitter2StrategyOptions,
   Twitter2StrategyDefaultName,
-} from "./Twitter2Strategy";
+} from "./Twitter2Strategy.js";
 
 export {
   Twitter1Strategy,
-  Twitter1StrategyVerifyParams,
-  Twitter1StrategyOptions,
   Twitter1StrategyDefaultName,
   Twitter2Strategy,
-  Twitter2StrategyVerifyParams,
-  Twitter2StrategyOptions,
   Twitter2StrategyDefaultName,
 };

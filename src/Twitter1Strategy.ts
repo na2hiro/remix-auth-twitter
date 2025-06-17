@@ -1,45 +1,17 @@
-import {
-  AppLoadContext,
-  json,
-  redirect,
-  SessionStorage,
-} from "@remix-run/server-runtime";
+import Base64 from "crypto-js/enc-base64.js";
+import hmacSHA1 from "crypto-js/hmac-sha1.js";
 import createDebug from "debug";
-import {
-  AuthenticateOptions,
-  Strategy,
-  StrategyVerifyCallback,
-} from "remix-auth";
+import { Strategy } from "remix-auth/strategy";
 import { v4 as uuid } from "uuid";
-import hmacSHA1 from "crypto-js/hmac-sha1";
-import Base64 from "crypto-js/enc-base64";
-import { fixedEncodeURIComponent } from "./utils";
+import { redirect } from "./lib/redirect.js";
+import { fixedEncodeURIComponent } from "./lib/uri-encoding.js";
 
-let debug = createDebug("TwitterStrategy");
+const debug = createDebug("TwitterStrategy");
 
 const requestTokenURL = "https://api.x.com/oauth/request_token";
 const authorizationURL = "https://api.x.com/oauth/authorize";
 const authenticationURL = "https://api.x.com/oauth/authenticate";
 const tokenURL = "https://api.x.com/oauth/access_token";
-
-export interface Twitter1StrategyOptions {
-  consumerKey: string;
-  consumerSecret: string;
-  callbackURL: string;
-  alwaysReauthorize?: boolean;
-}
-
-export interface Profile {
-  userId: string;
-  screenName: string;
-}
-
-export interface Twitter1StrategyVerifyParams {
-  accessToken: string;
-  accessTokenSecret: string;
-  profile: Profile;
-  context?: AppLoadContext;
-}
 
 export const Twitter1StrategyDefaultName = "twitter1";
 
@@ -63,7 +35,7 @@ export const Twitter1StrategyDefaultName = "twitter1";
  *                        If false, just let them login if they've once accepted the permission. (optional. default: false)
  *
  * @example
- * authenticator.use(new TwitterStrategy(
+ * authenticator.use(new Twitter1Strategy(
  *   {
  *     consumerKey: '123-456-789',
  *     consumerSecret: 'shhh-its-a-secret',
@@ -76,7 +48,7 @@ export const Twitter1StrategyDefaultName = "twitter1";
  */
 export class Twitter1Strategy<User> extends Strategy<
   User,
-  Twitter1StrategyVerifyParams
+  Twitter1Strategy.VerifyOptions
 > {
   name = Twitter1StrategyDefaultName;
 
@@ -86,8 +58,8 @@ export class Twitter1Strategy<User> extends Strategy<
   protected alwaysReauthorize: boolean;
 
   constructor(
-    options: Twitter1StrategyOptions,
-    verify: StrategyVerifyCallback<User, Twitter1StrategyVerifyParams>
+    protected options: Twitter1Strategy.ConstructorOptions,
+    verify: Strategy.VerifyFunction<User, Twitter1Strategy.VerifyOptions>
   ) {
     super(verify);
     this.consumerKey = options.consumerKey;
@@ -96,26 +68,11 @@ export class Twitter1Strategy<User> extends Strategy<
     this.alwaysReauthorize = options.alwaysReauthorize || false;
   }
 
-  async authenticate(
-    request: Request,
-    sessionStorage: SessionStorage,
-    options: AuthenticateOptions
-  ): Promise<User> {
+  async authenticate(request: Request): Promise<User> {
     debug("Request URL", request.url.toString());
-    let url = new URL(request.url);
-    let session = await sessionStorage.getSession(
-      request.headers.get("Cookie")
-    );
+    const url = new URL(request.url);
 
-    let user: User | null = session.get(options.sessionKey) ?? null;
-
-    // User is already authenticated
-    if (user) {
-      debug("User is authenticated");
-      return this.success(user, request, sessionStorage, options);
-    }
-
-    let callbackURL = this.getCallbackURL(url);
+    const callbackURL = this.getCallbackURL(url);
     debug("Callback URL", callbackURL.toString());
 
     // Before user navigates to login page: Redirect to login page
@@ -126,71 +83,44 @@ export class Twitter1Strategy<User> extends Strategy<
       );
 
       if (!callbackConfirmed) {
-        throw json(
-          { message: "Callback not confirmed" },
-          {
-            status: 401,
-          }
-        );
+        throw new Error("Callback not confirmed");
       }
 
       // Then let user authorize the app
-      throw redirect(this.getAuthURL(requestToken).toString(), {
-        headers: {
-          "Set-Cookie": await sessionStorage.commitSession(session),
-        },
-      });
+      throw redirect(this.getAuthURL(requestToken).toString());
     }
 
     // Validations of the callback URL params
-
     const denied = url.searchParams.get("denied");
     if (denied) {
       debug("Denied");
-      return await this.failure(
-        "Please authorize the app",
-        request,
-        sessionStorage,
-        options
-      );
+      throw new Error("Please authorize the app");
     }
     const oauthToken = url.searchParams.get("oauth_token");
     if (!oauthToken)
-      throw json(
-        { message: "Missing oauth token from auth response." },
-        { status: 400 }
-      );
+      throw new ReferenceError("Missing oauth token from auth response.");
     const oauthVerifier = url.searchParams.get("oauth_verifier");
     if (!oauthVerifier)
-      throw json(
-        { message: "Missing oauth verifier from auth response." },
-        { status: 400 }
-      );
+      throw new ReferenceError("Missing oauth verifier from auth response.");
 
     // Get the access token
-    let params = new URLSearchParams();
+    const params = new URLSearchParams();
     params.set("oauth_token", oauthToken);
     params.set("oauth_verifier", oauthVerifier);
 
-    let { accessToken, accessTokenSecret, ...profile } =
+    const { accessToken, accessTokenSecret, ...profile } =
       await this.fetchAccessTokenAndProfile(params);
 
-    // Verify the user and return it, or redirect
-    try {
-      user = await this.verify({
-        accessToken,
-        accessTokenSecret,
-        profile,
-        context: options.context,
-      });
-    } catch (error) {
-      debug("Failed to verify user", error);
-      let message = (error as Error).message;
-      return await this.failure(message, request, sessionStorage, options);
-    }
+    // Verify the user and return it
+    debug("Verifying the user profile");
+    const user = await this.verify({
+      accessToken,
+      accessTokenSecret,
+      profile,
+    });
 
     debug("User authenticated");
-    return await this.success(user, request, sessionStorage, options);
+    return user;
   }
 
   private getCallbackURL(url: URL) {
@@ -231,19 +161,21 @@ export class Twitter1Strategy<User> extends Strategy<
     url.search = new URLSearchParams(parameters).toString();
     const urlString = url.toString();
     debug("Fetching request token", urlString);
-    let response = await fetch(urlString, {
+    const response = await fetch(urlString, {
       method: "GET",
     });
 
     if (!response.ok) {
-      let body = await response.text();
+      const body = await response.text();
       throw new Response(body, { status: 401 });
     }
     const text = await response.text();
     const body: { [key: string]: string } = {};
     for (const pair of text.split("&")) {
       const [key, value] = pair.split("=");
-      body[key] = value;
+      if (typeof key !== "undefined" && typeof value !== "undefined") {
+        body[key] = value;
+      }
     }
 
     return {
@@ -294,10 +226,10 @@ export class Twitter1Strategy<User> extends Strategy<
    * Step 2: Let user authorize
    */
   private getAuthURL(requestToken: string) {
-    let params = new URLSearchParams();
+    const params = new URLSearchParams();
     params.set("oauth_token", requestToken);
 
-    let url = new URL(
+    const url = new URL(
       this.alwaysReauthorize ? authorizationURL : authenticationURL
     );
     url.search = params.toString();
@@ -317,15 +249,15 @@ export class Twitter1Strategy<User> extends Strategy<
     params.set("oauth_consumer_key", this.consumerKey);
 
     debug("Fetch access token", tokenURL, params.toString());
-    let response = await fetch(tokenURL, {
+    const response = await fetch(tokenURL, {
       method: "POST",
       headers: { "Content-Type": "application/x-www-form-urlencoded" },
       body: params,
     });
 
     if (!response.ok) {
-      let body = await response.text();
-      debug("error! " + body);
+      const body = await response.text();
+      debug(`error! ${body}`);
       throw new Response(body, { status: 401 });
     }
 
@@ -344,7 +276,9 @@ export class Twitter1Strategy<User> extends Strategy<
     const obj: { [key: string]: string } = {};
     for (const pair of text.split("&")) {
       const [key, value] = pair.split("=");
-      obj[key] = value;
+      if (typeof key !== "undefined" && typeof value !== "undefined") {
+        obj[key] = value;
+      }
     }
     return {
       accessToken: obj.oauth_token as string,
@@ -352,5 +286,25 @@ export class Twitter1Strategy<User> extends Strategy<
       userId: obj.user_id as string,
       screenName: obj.screen_name as string,
     } as const;
+  }
+}
+
+export namespace Twitter1Strategy {
+  export interface ConstructorOptions {
+    consumerKey: string;
+    consumerSecret: string;
+    callbackURL: string;
+    alwaysReauthorize?: boolean;
+  }
+
+  export interface Profile {
+    userId: string;
+    screenName: string;
+  }
+
+  export interface VerifyOptions {
+    accessToken: string;
+    accessTokenSecret: string;
+    profile: Profile;
   }
 }

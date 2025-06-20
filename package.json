@@ -1,61 +1,57 @@
 {
-  "name": "remix-auth-twitter",
-  "version": "4.0.0",
-  "author": "na2hiro <a@81.la>",
-  "description": "Twitter OAuth authentication plugin for Remix Auth",
-  "type": "module",
-  "sideEffects": false,
-  "scripts": {
-    "build": "tsc",
-    "typecheck": "tsc --noEmit",
-    "quality": "biome check .",
-    "quality:fix": "biome check . --write --unsafe",
-    "exports": "bun run ./scripts/exports.ts"
-  },
-  "keywords": [
-    "remix",
-    "remix-auth",
-    "auth",
-    "authentication",
-    "strategy",
-    "twitter",
-    "oauth"
-  ],
-  "license": "MIT",
-  "files": [
-    "build",
-    "package.json",
-    "README.md"
-  ],
-  "exports": {
-    ".": "./build/index.js",
-    "./package.json": "./package.json"
-  },
-  "repository": {
-    "type": "git",
-    "url": "git+https://github.com/na2hiro/remix-auth-twitter.git"
-  },
-  "homepage": "https://github.com/na2hiro/remix-auth-twitter#readme",
-  "peerDependencies": {
-    "remix-auth": "^4.2.0"
-  },
-  "devDependencies": {
-    "@biomejs/biome": "1.9.4",
-    "@total-typescript/tsconfig": "^1.0.4",
-    "@types/crypto-js": "^4.1.0",
-    "@types/debug": "^4.1.7",
-    "@types/uuid": "^8.3.4",
-    "msw": "^2.10.2",
-    "typedoc": "^0.28.5",
-    "typedoc-plugin-mdn-links": "^5.0.2",
-    "typescript": "^5.0.4",
-    "@types/bun": "latest"
-  },
-  "dependencies": {
-    "@mjackson/headers": "^0.11.1",
-    "arctic": "^3.7.0",
-    "crypto-js": "^4.2.0",
-    "debug": "^4.3.3",
-    "uuid": "^8.3.2"
-  }
+	"name": "remix-auth-twitter",
+	"version": "4.0.0",
+	"author": "na2hiro <a@81.la>",
+	"description": "Twitter OAuth authentication plugin for Remix Auth",
+	"type": "module",
+	"sideEffects": false,
+	"scripts": {
+		"build": "tsc",
+		"typecheck": "tsc --noEmit",
+		"quality": "biome check .",
+		"quality:fix": "biome check . --write --unsafe",
+		"exports": "bun run ./scripts/exports.ts"
+	},
+	"keywords": [
+		"remix",
+		"remix-auth",
+		"auth",
+		"authentication",
+		"strategy",
+		"twitter",
+		"oauth"
+	],
+	"license": "MIT",
+	"files": ["build", "package.json", "README.md"],
+	"exports": {
+		".": "./build/index.js",
+		"./package.json": "./package.json"
+	},
+	"repository": {
+		"type": "git",
+		"url": "git+https://github.com/na2hiro/remix-auth-twitter.git"
+	},
+	"homepage": "https://github.com/na2hiro/remix-auth-twitter#readme",
+	"peerDependencies": {
+		"remix-auth": "^4.2.0"
+	},
+	"devDependencies": {
+		"@biomejs/biome": "1.9.4",
+		"@total-typescript/tsconfig": "^1.0.4",
+		"@types/crypto-js": "^4.1.0",
+		"@types/debug": "^4.1.7",
+		"@types/uuid": "^8.3.4",
+		"msw": "^2.10.2",
+		"typedoc": "^0.28.5",
+		"typedoc-plugin-mdn-links": "^5.0.2",
+		"typescript": "^5.0.4",
+		"@types/bun": "latest"
+	},
+	"dependencies": {
+		"@mjackson/headers": "^0.11.1",
+		"arctic": "^3.7.0",
+		"crypto-js": "^4.2.0",
+		"debug": "^4.3.3",
+		"uuid": "^8.3.2"
+	}
 }

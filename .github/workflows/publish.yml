@@ -10,8 +10,8 @@ jobs:
     steps:
       - uses: actions/checkout@v4
       - uses: oven-sh/setup-bun@v2
-      - run: npm install
-      - run: npm run build
+      - run: bun install
+      - run: bun run build
 
       - uses: actions/setup-node@v4
         with:

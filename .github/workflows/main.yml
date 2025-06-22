@@ -17,7 +17,7 @@ jobs:
         run: bun install --frozen-lockfile
 
       - name: Build
-        run: npm run build
+        run: bun run build
 
   typecheck:
     name: Typechecker
@@ -33,7 +33,7 @@ jobs:
         run: bun install --frozen-lockfile
 
       - name: Typecheck
-        run: npm run typecheck
+        run: bun run typecheck
 
   test:
     name: Unit and Integration Tests
@@ -51,8 +51,8 @@ jobs:
       - name: Test
         run: bun test --maxWorkers=2
 
-  exports:
-    name: Verify Exports
+  lint:
+    name: Linter
     runs-on: ubuntu-latest
     steps:
       - name: Checkout repo
@@ -65,7 +65,7 @@ jobs:
         run: bun install --frozen-lockfile
 
       - name: Build
-        run: npm run build
+        run: bun run build
 
       - name: Export
-        run: bun run exports
+        run: bun run quality

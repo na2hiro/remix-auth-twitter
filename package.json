@@ -1,6 +1,6 @@
 {
 	"name": "remix-auth-twitter",
-	"version": "3.0.0",
+	"version": "4.0.0-0",
 	"author": "na2hiro <a@81.la>",
 	"description": "Twitter OAuth authentication plugin for Remix Auth",
 	"type": "module",
@@ -23,7 +23,11 @@
 		"oauth"
 	],
 	"license": "MIT",
-	"files": ["build", "package.json", "README.md"],
+	"files": [
+		"build",
+		"package.json",
+		"README.md"
+	],
 	"exports": {
 		".": "./build/index.js",
 		"./package.json": "./package.json"

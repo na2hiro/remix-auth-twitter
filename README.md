@@ -78,7 +78,7 @@ authenticator.use(
       const accessToken = tokens.accessToken();
 
       // In this example I want to use Twitter as identity provider: so resolve identity from the token
-      const userClient = new TwitterApi(token);
+      const userClient = new TwitterApi(accessToken);
 
       const result = await userClient.v2.me({
         "user.fields": ["profile_image_url"],
@@ -192,4 +192,109 @@ Then let the user do `POST /login`:
 <Form method="post" action="/login">
   <button>Login</button>
 </Form>
+```
+
+## Migration from v3 to v4
+
+Here are typical migration steps from v3 to v4.
+
+`remix-auth@4` stopped to handle sessions. They don't handle Remix's sessionStorage anymore.
+
+```diff
+// auth.server.ts
+-export const authenticator = new Authenticator<UserDocument>(sessionStorage);
++export const authenticator = new Authenticator<UserDocument>();
+```
+
+`Strategy` type has been moved from `remix-auth` to `remix-auth/strategy`
+
+```diff
+// auth.server.ts
+-import { Authenticator, Strategy } from "remix-auth";
++import { Authenticator } from "remix-auth";
++import { Strategy } from "remix-auth/strategy";
+```
+
+`Twitter2Strategy`'s second argument, `verify` function, now gets request and tokens
+
+```diff
+// auth.server.ts
+ authenticator.use(
+   new Twitter2Strategy(
+     {
+       clientID,
+       clientSecret,
+       callbackURL: `${process.env.HOST}/login/callback`,
+       scopes: ["tweet.read", "users.read"],
+     },
+-    async ({ accessToken, context }) => {
+-      return await registerUser(accessToken, context);
++    async ({ request, tokens }) => {
++      const accessToken = tokens.accessToken();
++
++      return await registerUser(accessToken);
+     }
+   ),
+   "twitter"
+ );
+
+```
+
+On the login callback route, handle the successful case by persisting the result to session of our choice, and handle thrown error. 
+
+```diff
+// login.callback.tsx
+ export let loader: LoaderFunction = async ({request}) => {
+-  await authenticator.authenticate("twitter", request, {
+-    successRedirect: "/dashboard",
+-    failureRedirect: "/login/failure"
+-  });
++  let user;
++  try {
++    user = authenticator.authenticate("twitter", request),
++  } catch(e) {
++    throw redirect("/login/failure")
++  }
++  const session = await sessionStorage.getSession(
++    request.headers.get("Cookie")
++  );
++
++  session.set("user", user);
++
++  return redirect("/app", {
++    headers: {
++      "Set-Cookie": await sessionStorage.commitSession(session),
++    },
++  });
+ };
+```
+
+Reading session is all up to us now:
+
+```diff
+// auth.server.ts
+ export const currentUser = async (request: Request) => {
+-  return await authenticator.isAuthenticated(request);
++  const session = await sessionStorage.getSession(request.headers.get("cookie"));
++  return session.get("user");
+ };
+```
+
+Same for the logic for logout:
+
+```diff
+// logout.tsx
+ export async function logout(request: Request, returnTo = "/") {
+-  await authenticator.logout(request, {
+-    redirectTo: returnTo,
+-  });
++  let session = await sessionStorage.getSession(request.headers.get("cookie"));
++  session.unset("user");
++
++  return redirect(returnTo, {
++    headers: {
++      "Set-Cookie": await sessionStorage.commitSession(session),
++    },
++  });
+ }
 ```

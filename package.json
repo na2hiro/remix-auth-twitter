@@ -23,11 +23,7 @@
 		"oauth"
 	],
 	"license": "MIT",
-	"files": [
-		"build",
-		"package.json",
-		"README.md"
-	],
+	"files": ["build", "package.json", "README.md"],
 	"exports": {
 		".": "./build/index.js",
 		"./package.json": "./package.json"

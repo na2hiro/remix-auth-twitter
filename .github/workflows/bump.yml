@@ -33,6 +33,6 @@ jobs:
           git config user.email '${{ secrets.GIT_USER_EMAIL }}'
       - name: bump version
         run: npm version ${{ github.event.inputs.version }}
-
+      - run: bun run quality:fix
       - name: Push latest version
         run: git push origin main --follow-tags

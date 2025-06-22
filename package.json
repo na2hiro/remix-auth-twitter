@@ -7,6 +7,8 @@
 	"sideEffects": false,
 	"scripts": {
 		"build": "tsc",
+		"test": "bun test",
+		"test:coverage": "bun test --coverage",
 		"typecheck": "tsc --noEmit",
 		"quality": "biome check .",
 		"quality:fix": "biome check . --write --unsafe",

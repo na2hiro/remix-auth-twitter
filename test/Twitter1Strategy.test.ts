@@ -93,7 +93,7 @@ describe(Twitter1Strategy.name, () => {
 		const strategy = new Twitter1Strategy<User>(options, verify);
 		const request = new Request("https://remix.auth/login");
 
-		await expect(strategy.authenticate(request)).rejects.toThrow(
+		expect(strategy.authenticate(request)).rejects.toThrow(
 			"Callback not confirmed",
 		);
 	});

@@ -5,7 +5,7 @@ Remix Auth plugin for Twitter [OAuth 2.0](https://developer.x.com/en/docs/authen
 ## Supported runtimes
 
 | Runtime    | Has Support |
-| ---------- | ----------- |
+|------------| ----------- |
 | Node.js    | ✅          |
 | Cloudflare | ✅          |
 
@@ -192,6 +192,17 @@ Then let the user do `POST /login`:
 <Form method="post" action="/login">
   <button>Login</button>
 </Form>
+```
+
+### Polyfill for Node 18 or below
+
+`arctic` uses a global `crypto` object that doesn't exist on Node 18 or below. Bump Node to 20+, or add the following polyfill to entry.server.tsx:
+
+```typescript
+if (typeof globalThis.crypto === 'undefined') {
+  const { webcrypto } = await import('node:crypto');
+  globalThis.crypto = webcrypto as Crypto;
+}
 ```
 
 ## Migration from v3 to v4

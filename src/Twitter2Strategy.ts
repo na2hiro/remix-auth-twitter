@@ -1,4 +1,7 @@
 import { Cookie, SetCookie, type SetCookieInit } from "@mjackson/headers";
+import createDebug from "debug";
+import { Strategy } from "remix-auth/strategy";
+import { redirect } from "./lib/redirect.js";
 import {
 	OAuth2RequestError,
 	type OAuth2Tokens,
@@ -7,11 +10,7 @@ import {
 	UnexpectedResponseError,
 	generateCodeVerifier,
 	generateState,
-} from "arctic";
-
-import createDebug from "debug";
-import { Strategy } from "remix-auth/strategy";
-import { redirect } from "./lib/redirect.js";
+} from "./lib/twitter-oauth2.js";
 
 const debug = createDebug("Twitter2Strategy");
 

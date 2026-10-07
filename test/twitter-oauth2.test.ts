@@ -18,8 +18,8 @@ import {
 	generateState,
 } from "../src/lib/twitter-oauth2";
 
-const tokenEndpoint = "https://api.twitter.com/2/oauth2/token";
-const revokeEndpoint = "https://api.twitter.com/2/oauth2/revoke";
+const tokenEndpoint = "https://api.x.com/2/oauth2/token";
+const revokeEndpoint = "https://api.x.com/2/oauth2/revoke";
 const server = setupServer();
 
 describe("local Twitter OAuth 2.0 client", () => {
@@ -42,7 +42,7 @@ describe("local Twitter OAuth 2.0 client", () => {
 			"tweet.read",
 		]);
 
-		expect(url.origin).toBe("https://twitter.com");
+		expect(url.origin).toBe("https://x.com");
 		expect(url.pathname).toBe("/i/oauth2/authorize");
 		expect(url.searchParams.get("response_type")).toBe("code");
 		expect(url.searchParams.get("redirect_uri")).toBe(

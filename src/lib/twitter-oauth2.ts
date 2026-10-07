@@ -3,9 +3,9 @@
 import * as sha2 from "@oslojs/crypto/sha2";
 import * as encoding from "@oslojs/encoding";
 
-const authorizationEndpoint = "https://twitter.com/i/oauth2/authorize";
-const tokenEndpoint = "https://api.twitter.com/2/oauth2/token";
-const tokenRevocationEndpoint = "https://api.twitter.com/2/oauth2/revoke";
+const authorizationEndpoint = "https://x.com/i/oauth2/authorize";
+const tokenEndpoint = "https://api.x.com/2/oauth2/token";
+const tokenRevocationEndpoint = "https://api.x.com/2/oauth2/revoke";
 
 export class OAuth2Tokens {
 	constructor(public data: object) {}

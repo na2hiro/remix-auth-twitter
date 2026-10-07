@@ -3,22 +3,39 @@ name: Publish
 on:
   release:
     types: [published]
+  workflow_dispatch:
+    inputs:
+      tag:
+        description: Existing release tag to publish
+        required: true
+        type: string
+
+permissions:
+  contents: read
+  id-token: write
 
 jobs:
   build:
     runs-on: ubuntu-latest
     steps:
       - uses: actions/checkout@v4
+        with:
+          ref: ${{ github.event.release.tag_name || inputs.tag }}
       - uses: oven-sh/setup-bun@v2
-      - run: bun install
+      - run: bun install --frozen-lockfile
       - run: bun run build
       - run: bun run exports
 
       - uses: actions/setup-node@v4
         with:
-          node-version: "lts/*"
+          node-version: "24"
           registry-url: https://registry.npmjs.org/
 
-      - run: npm publish --access public
+      - run: npm install --global 'npm@^11.5.1'
+
+      - name: Verify release tag matches package version
         env:
-          NODE_AUTH_TOKEN: ${{secrets.NPM_TOKEN}}
+          RELEASE_TAG: ${{ github.event.release.tag_name || inputs.tag }}
+        run: node -e 'if ("v" + require("./package.json").version !== process.env.RELEASE_TAG) process.exit(1)'
+
+      - run: npm publish --access public

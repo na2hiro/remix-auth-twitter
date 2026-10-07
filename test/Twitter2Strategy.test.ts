@@ -14,7 +14,7 @@ import { Twitter2Strategy } from "../src";
 import { catchResponse } from "./helper";
 
 const server = setupServer(
-	http.post("https://api.twitter.com/2/oauth2/token", async () => {
+	http.post("https://api.x.com/2/oauth2/token", async () => {
 		return HttpResponse.json({
 			access_token: "mocked_access_token",
 			expires_in: 3600,
@@ -70,6 +70,7 @@ describe(Twitter2Strategy.name, () => {
 		const params = new URLSearchParams(setCookie.value);
 
 		expect(redirect.pathname).toBe("/i/oauth2/authorize");
+		expect(redirect.origin).toBe("https://x.com");
 		expect(redirect.searchParams.get("response_type")).toBe("code");
 		expect(redirect.searchParams.get("client_id")).toBe(options.clientID);
 		expect(redirect.searchParams.get("redirect_uri")).toBe(options.callbackURL);

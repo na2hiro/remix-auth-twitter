@@ -73,7 +73,7 @@ authenticator.use(
     async ({ request, tokens }) => {
       /**
        * Get accessToken from OAuth2Tokens object
-       * @see https://arcticjs.dev/reference/main/OAuth2Tokens
+       * The token object provides accessToken(), refreshToken(), scopes(), etc.
        */
       const accessToken = tokens.accessToken();
 
@@ -196,7 +196,7 @@ Then let the user do `POST /login`:
 
 ### Polyfill for Node 18 or below
 
-`arctic` uses a global `crypto` object that doesn't exist on Node 18 or below. Bump Node to 20+, or add the following polyfill to entry.server.tsx:
+The OAuth 2.0 strategy uses a global `crypto` object that doesn't exist on Node 18 or below. Bump Node to 20+, or add the following polyfill to entry.server.tsx:
 
 ```typescript
 if (typeof globalThis.crypto === 'undefined') {
